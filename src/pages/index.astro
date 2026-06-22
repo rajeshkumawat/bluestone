@@ -1,0 +1,12 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import BlockRenderer from "@components/blocks/BlockRenderer.astro";
+import { getPage } from "@content";
+
+const home = await getPage("home");
+if (!home) throw new Error("home page content missing");
+---
+
+<BaseLayout title="Defense & Government Technology Investing" description="Bluestone Investment Partners is a private equity firm investing in lower middle market defense and government technology companies." heroHeader>
+  <BlockRenderer blocks={home.blocks} />
+</BaseLayout>

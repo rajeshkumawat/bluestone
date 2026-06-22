@@ -1,0 +1,128 @@
+---
+/**
+ * Investment Criteria — heading + N rows. Each row has:
+ *   – left side: circular navy icon + label
+ *   – right side: content (string, key/value pairs, or bullet list)
+ *   – horizontal rule separating each row.
+ *
+ * Per Figma frame 8262:12389.
+ */
+import type { InvestmentCriteriaBlock } from "@content";
+
+type Props = InvestmentCriteriaBlock;
+const { title, rows } = Astro.props;
+
+type KeyValue = { key: string; value: string };
+
+// Pre-classify each row's content into one of three shapes so the
+// template doesn't have to do TS narrowing inline (which clashes
+// with JSX parsing on Array<{...}> generics).
+type RowKind = "string" | "bullets" | "keyvalues";
+const classifyRow = (
+  content: string | string[] | KeyValue[],
+): { kind: RowKind; asString?: string; asBullets?: string[]; asKeyValues?: KeyValue[] } => {
+  if (typeof content === "string") return { kind: "string", asString: content };
+  if (content.length === 0) return { kind: "bullets", asBullets: [] };
+  if (typeof content[0] === "string") return { kind: "bullets", asBullets: content as string[] };
+  return { kind: "keyvalues", asKeyValues: content as KeyValue[] };
+};
+
+const rowsClassified = rows.map((r) => ({
+  ...r,
+  classified: classifyRow(r.content),
+}));
+---
+
+<section data-block="investment-criteria" class="section bg-[var(--color-tertiary)]">
+  <div class="container-max flex flex-col gap-12">
+    <h2 data-criteria-title class="h2 text-[var(--color-text)]">{title}</h2>
+
+    <ul class="flex flex-col">
+      {
+        rowsClassified.map((row, idx) => (
+          <li
+            data-criteria-row
+            class:list={[
+              "grid gap-6 py-6 md:grid-cols-[1fr_1fr] md:gap-12 md:items-center",
+              idx > 0 && "border-t border-[var(--color-primary-50)]",
+            ]}
+          >
+            {/* Left: icon + label */}
+            <div class="flex items-center gap-6">
+              <div class="shrink-0 flex h-[54px] w-[54px] items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-bg)]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  {row.icon === "target" && (
+                    <>
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" />
+                      <circle cx="12" cy="12" r="5.5" stroke="currentColor" stroke-width="1.5" />
+                      <circle cx="12" cy="12" r="2" fill="currentColor" />
+                    </>
+                  )}
+                  {row.icon === "bar-chart" && (
+                    <>
+                      <rect x="4" y="13" width="3" height="7" fill="currentColor" />
+                      <rect x="10.5" y="6" width="3" height="14" fill="currentColor" />
+                      <rect x="17" y="9" width="3" height="11" fill="currentColor" />
+                    </>
+                  )}
+                  {row.icon === "globe" && (
+                    <>
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" />
+                      <path
+                        d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      />
+                    </>
+                  )}
+                </svg>
+              </div>
+              <h3 class="font-display text-[clamp(22px,2.4vw,36px)] leading-tight text-[var(--color-text)]">
+                {row.label}
+              </h3>
+            </div>
+
+            {/* Right: content — three shapes, classified above */}
+            <div class="text-[var(--color-text)]">
+              {row.classified.kind === "string" && (
+                <p class="body-l">{row.classified.asString}</p>
+              )}
+              {row.classified.kind === "bullets" && (
+                <ul class="flex flex-col gap-2">
+                  {row.classified.asBullets!.map((item) => (
+                    <li class="body-l">{item}</li>
+                  ))}
+                </ul>
+              )}
+              {row.classified.kind === "keyvalues" && (
+                <dl class="flex flex-col gap-3 body-l">
+                  {row.classified.asKeyValues!.map((kv) => (
+                    <div class="flex flex-wrap gap-1">
+                      <dt class="font-medium">{kv.key}:</dt>
+                      <dd>{kv.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  import { gsap, setupBatchReveal } from "@lib/animations";
+
+  gsap.from("[data-criteria-title]", {
+    opacity: 0,
+    y: 24,
+    duration: 1,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-criteria-title]", start: "top 85%", once: true },
+  });
+
+  // Each row reveals individually as it enters the viewport
+  setupBatchReveal("[data-criteria-row]", { y: 20, stagger: 0.1, start: "top 90%" });
+</script>

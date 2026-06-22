@@ -1,0 +1,73 @@
+---
+/**
+ * BaseLayout — wraps every page with shared chrome (Header/Footer)
+ * and boots global animation libs once.
+ */
+import "@styles/global.css";
+import Header from "@components/global/Header.astro";
+import Footer from "@components/global/Footer.astro";
+import { getSiteSettings } from "@content";
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** When true, the header starts transparent (over a dark hero). */
+  heroHeader?: boolean;
+}
+
+const { title, description, heroHeader = false } = Astro.props;
+const site = await getSiteSettings();
+const pageTitle = title ? `${title} — ${site.siteName}` : site.siteName;
+const ogImage = new URL("/og-image.jpg", Astro.site).href;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description ?? site.tagline} />
+    <meta name="generator" content={Astro.generator} />
+
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description ?? site.tagline} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content={site.siteName} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${site.siteName} — ${site.tagline}`} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description ?? site.tagline} />
+    <meta name="twitter:image" content={ogImage} />
+  </head>
+  <body>
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:p-2"
+      >Skip to content</a
+    >
+
+    <Header heroHeader={heroHeader} nav={site.nav} />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <Footer site={site} />
+
+    <!-- Boot smooth scroll + global GSAP -->
+    <script>
+      import { initSmoothScroll } from "@lib/animations";
+      initSmoothScroll();
+    </script>
+  </body>
+</html>

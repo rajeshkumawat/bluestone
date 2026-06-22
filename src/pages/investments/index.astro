@@ -1,0 +1,12 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import BlockRenderer from "@components/blocks/BlockRenderer.astro";
+import { getPage } from "@content";
+
+const page = await getPage("investments");
+if (!page) throw new Error("investments page content missing");
+---
+
+<BaseLayout title="Defense & Government Technology Investments" description="Explore Bluestone's active and realized investments across defense, government technology, cybersecurity, geospatial, and mission-focused companies.">
+  <BlockRenderer blocks={page.blocks} />
+</BaseLayout>

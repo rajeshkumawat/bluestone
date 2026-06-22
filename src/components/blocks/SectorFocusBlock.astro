@@ -1,0 +1,67 @@
+---
+/**
+ * Sector Focus — white card on tertiary bg with a vertical accent
+ * divider on the left, then title + subtitle + paragraphs.
+ *
+ * Per Figma frame 8243:3219.
+ */
+import type { SectorFocusBlock } from "@content";
+
+type Props = SectorFocusBlock;
+const { title, subtitle, paragraphs } = Astro.props;
+---
+
+<section data-block="sector-focus" class="section bg-[var(--color-tertiary)]">
+  <div class="container-max">
+    <div
+      data-focus-card
+      class="bg-[var(--color-secondary)] rounded-[10px] flex gap-12 items-start"
+      style="padding: clamp(28px, 5vw, 60px);"
+    >
+      <!-- Vertical accent divider on the left, full height of the content -->
+      <div class="hidden md:flex h-auto self-stretch items-center">
+        <div class="w-[1.5px] bg-[var(--color-primary-50)] self-stretch min-h-[200px]"></div>
+      </div>
+
+      <div class="flex-1 flex flex-col gap-4 text-[var(--color-text)]">
+        <h2 data-focus-title class="h2 leading-tight">{title}</h2>
+        <p data-focus-subtitle class="font-display text-[clamp(24px,2.4vw,36px)] leading-tight">{subtitle}</p>
+        <div class="mt-4 flex flex-col gap-6">
+          {paragraphs.map((p) => <p data-focus-para class="body-l">{p}</p>)}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap } from "@lib/animations";
+
+  gsap.from("[data-focus-card]", {
+    opacity: 0,
+    y: 30,
+    duration: 1,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-focus-card]", start: "top 85%", once: true },
+  });
+
+  gsap.from("[data-focus-title], [data-focus-subtitle]", {
+    opacity: 0,
+    y: 16,
+    duration: 0.9,
+    stagger: 0.1,
+    ease: "expo.out",
+    delay: 0.2,
+    scrollTrigger: { trigger: "[data-focus-card]", start: "top 85%", once: true },
+  });
+
+  gsap.from("[data-focus-para]", {
+    opacity: 0,
+    y: 12,
+    duration: 0.8,
+    stagger: 0.08,
+    ease: "expo.out",
+    delay: 0.4,
+    scrollTrigger: { trigger: "[data-focus-card]", start: "top 85%", once: true },
+  });
+</script>

@@ -1,0 +1,17 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import BlockRenderer from "@components/blocks/BlockRenderer.astro";
+import { getPage } from "@content";
+
+const team = await getPage("team");
+if (!team) throw new Error("team page content missing");
+---
+
+<!--
+  No heroHeader prop — the Team page uses a light-bg page header,
+  so the global header sits on white from the start (with its
+  built-in spacer below the fixed bar).
+-->
+<BaseLayout title="Bluestone Investment Partners Team" description="Meet the Bluestone Investment Partners team, combining private equity, M&A, operating, and defense sector leadership experience.">
+  <BlockRenderer blocks={team.blocks} />
+</BaseLayout>

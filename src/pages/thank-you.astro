@@ -1,0 +1,130 @@
+---
+/**
+ * Thank You — shown after a successful contact form submission.
+ *
+ * Clean, centered, single-purpose: confirm receipt and offer a clear
+ * way back. Matches the design language of /404 (centered hero,
+ * Liberation Serif h1, divider, body copy, primary + outline CTAs).
+ */
+import BaseLayout from "@layouts/BaseLayout.astro";
+import Button from "@components/ui/Button.astro";
+---
+
+<BaseLayout
+  title="Thank You"
+  description="Your message has been sent. The Bluestone team will be in touch shortly."
+>
+  <section class="bg-[var(--color-bg)] section relative overflow-hidden">
+    <div class="container-max relative">
+      <div
+        data-thanks-content
+        class="relative flex flex-col items-center text-center gap-6 py-16 sm:py-24 lg:py-32"
+      >
+        {/* Checkmark medallion */}
+        <div
+          data-thanks-icon
+          class="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--color-tertiary)] text-[var(--color-primary)]"
+        >
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+
+        <h1 data-thanks-title class="h1 text-[var(--color-text)]">Thank You</h1>
+
+        <span
+          data-thanks-divider
+          class="block h-[2px] w-[190px] bg-[var(--color-text)] origin-left"
+        ></span>
+
+        <p data-thanks-subtitle class="body-l max-w-[60ch] text-[var(--color-text)]">
+          Your message has been received. A member of the Bluestone team will be in touch shortly.
+        </p>
+
+        <div data-thanks-ctas class="mt-6 flex flex-wrap gap-4 items-center justify-center">
+          <Button label="Back to Home" href="/" variant="primary" />
+          <Button label="View Investments" href="/investments" variant="outline" arrow={false} />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    /*
+      Entrance animations are CSS-driven (not GSAP) so the initial hidden
+      state is applied at first paint — no flash of fully-rendered content
+      before JS catches up. Each element starts hidden, then animates in
+      with a staggered delay.
+    */
+    [data-thanks-icon],
+    [data-thanks-title],
+    [data-thanks-divider],
+    [data-thanks-subtitle],
+    [data-thanks-ctas] {
+      opacity: 0;
+      animation-fill-mode: forwards;
+      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    [data-thanks-icon] {
+      transform: scale(0.6);
+      animation-name: thanks-pop;
+      animation-duration: 0.9s;
+      animation-delay: 0.05s;
+    }
+    [data-thanks-title] {
+      transform: translateY(24px);
+      animation-name: thanks-fade-up;
+      animation-duration: 1s;
+      animation-delay: 0.2s;
+    }
+    [data-thanks-divider] {
+      transform: scaleX(0);
+      transform-origin: left center;
+      animation-name: thanks-draw;
+      animation-duration: 1.1s;
+      animation-delay: 0.45s;
+    }
+    [data-thanks-subtitle] {
+      transform: translateY(16px);
+      animation-name: thanks-fade-up;
+      animation-duration: 0.9s;
+      animation-delay: 0.55s;
+    }
+    [data-thanks-ctas] {
+      transform: translateY(16px);
+      animation-name: thanks-fade-up;
+      animation-duration: 0.9s;
+      animation-delay: 0.7s;
+    }
+
+    @keyframes thanks-pop {
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes thanks-fade-up {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes thanks-draw {
+      to { opacity: 1; transform: scaleX(1); }
+    }
+
+    /* Respect users who've asked for reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      [data-thanks-icon],
+      [data-thanks-title],
+      [data-thanks-divider],
+      [data-thanks-subtitle],
+      [data-thanks-ctas] {
+        opacity: 1;
+        transform: none;
+        animation: none;
+      }
+    }
+  </style>
+</BaseLayout>

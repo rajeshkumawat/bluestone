@@ -1,0 +1,91 @@
+---
+import Logo from "./Logo.astro";
+import type { SiteSettings } from "@content";
+
+interface Props {
+  site: SiteSettings;
+}
+const { site } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-[var(--color-primary)] text-[var(--color-bg)]">
+  <div
+    class="container-max"
+    style="padding-inline: clamp(20px, 5.5vw, 80px); padding-top: 60px; padding-bottom: 40px;"
+  >
+    <div class="flex flex-col gap-12 md:flex-row md:items-end md:justify-between">
+      <!-- Left: logo + contact -->
+      <div class="flex flex-col gap-6 max-w-md">
+        <div class="w-[180px]">
+          <Logo class="text-white" />
+        </div>
+        <div class="text-[16px] opacity-70 flex flex-col gap-2">
+          <p>{site.contact.address}</p>
+          {site.contact.address2 && <p>{site.contact.address2}</p>}
+          <p>
+            <a
+              href={`tel:${site.contact.phone.replace(/[^\d+]/g, "")}`}
+              class="hover:opacity-100 transition-opacity"
+            >{site.contact.phone}</a>
+          </p>
+          {site.contact.email && (
+            <p>
+              <a
+                href={`mailto:${site.contact.email}`}
+                class="hover:opacity-100 transition-opacity"
+              >{site.contact.email}</a>
+            </p>
+          )}
+        </div>
+      </div>
+
+      <!-- Right: nav + social -->
+      <div class="flex flex-col items-start md:items-end gap-6">
+        <nav aria-label="Footer" class="flex flex-wrap gap-6 text-[16px] font-nav">
+          {site.nav.map((item) => <a href={item.href} class="hover:opacity-70 transition-opacity">{item.label}</a>)}
+        </nav>
+        <div class="flex gap-4">
+          {
+            site.social.map((s) => (
+              <a
+                href={s.href}
+                aria-label={s.platform}
+                class="inline-flex h-6 w-6 items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {s.platform === "linkedin" && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 0H5C2.24 0 0 2.24 0 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5V5c0-2.76-2.24-5-5-5zM8 19H5V8h3v11zM6.5 6.73c-.97 0-1.75-.79-1.75-1.75s.78-1.74 1.75-1.74 1.75.78 1.75 1.74-.78 1.75-1.75 1.75zM20 19h-3v-5.6c0-3.37-4-3.12-4 0V19h-3V8h3v1.77c1.4-2.59 7-2.78 7 2.47V19z" />
+                  </svg>
+                )}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="mt-12 pt-5 border-t border-white/30 flex flex-col gap-2 md:flex-row md:items-center md:justify-between body-s opacity-70"
+    >
+      <p>
+        © {year} Bluestone Investment Partners. All rights reserved. Powered by{" "}
+        <a
+          href="https://designindc.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="underline-offset-2 hover:underline hover:opacity-100 transition-opacity"
+        >Design in DC</a>
+      </p>
+      <nav aria-label="Legal" class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <a href="/privacy-policy" class="hover:opacity-100 transition-opacity">Privacy Policy</a>
+        <span aria-hidden="true">·</span>
+        <a href="/terms-of-use" class="hover:opacity-100 transition-opacity">Terms of Use</a>
+        <span aria-hidden="true">·</span>
+        <a href="/cookie-policy" class="hover:opacity-100 transition-opacity">Cookie Policy</a>
+      </nav>
+    </div>
+  </div>
+</footer>

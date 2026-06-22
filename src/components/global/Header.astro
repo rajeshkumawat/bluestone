@@ -1,0 +1,431 @@
+---
+/**
+ * Header — sticky, scroll-color flip + mobile drawer.
+ *
+ * Behavior (per Figma annotation):
+ *   "once you scroll it will turn white and stay at the top"
+ *
+ * Starts transparent over the dark hero, then flips to a white
+ * frosted bar with navy text + logo when the user scrolls past
+ * the hero threshold.
+ *
+ * Mobile (< md): hamburger opens a full-height drawer from the right
+ * with the same nav links rendered as oversized serif headings.
+ */
+import Logo from "./Logo.astro";
+
+interface Props {
+  heroHeader?: boolean;
+  nav: Array<{ label: string; href: string }>;
+}
+
+const { heroHeader = false, nav } = Astro.props;
+---
+
+<header
+  data-header
+  data-hero-header={heroHeader ? "true" : "false"}
+  class:list={[
+    "fixed top-0 left-0 right-0 z-40 transition-[background-color,backdrop-filter,padding] duration-500 ease-out",
+    heroHeader ? "bg-transparent" : "bg-white/90 backdrop-blur-md shadow-sm",
+  ]}
+>
+  <div
+    data-header-inner
+    class="container-max flex items-center justify-between transition-[padding] duration-500 ease-out"
+    style="padding-inline: clamp(20px, 5.5vw, 80px); padding-block: 20px;"
+  >
+    <a href="/" class="block w-[120px] sm:w-[150px] lg:w-[180px] pb-[2px]" aria-label="Bluestone home">
+      <Logo
+        class:list={[
+          "h-auto w-full transition-colors duration-500",
+          heroHeader ? "text-white" : "text-[var(--color-primary)]",
+        ]}
+      />
+    </a>
+
+    <nav aria-label="Primary" class="hidden md:flex items-center gap-6 font-nav text-[16px] tracking-[0.2px]">
+      {
+        nav.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              "relative transition-colors duration-300",
+              "after:absolute after:left-0 after:bottom-[-4px] after:h-[1px] after:w-0 after:bg-current after:transition-[width] after:duration-300 hover:after:w-full",
+              heroHeader ? "text-white" : "text-[var(--color-text)]",
+            ]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <!--
+      Spacer so the header layout stays balanced on mobile —
+      the actual hamburger button is rendered as a fixed sibling
+      below so it can sit ABOVE the drawer (z-index 60 > drawer 50)
+      and morph cleanly between hamburger and X.
+    -->
+    <span aria-hidden="true" class="md:hidden block w-10 h-10"></span>
+  </div>
+</header>
+
+<!-- Spacer so non-hero pages don't slide under the fixed header -->
+{!heroHeader && <div aria-hidden="true" style="height: 96px;" />}
+
+<!--
+  Mobile hamburger / X toggle.
+  Rendered as a sibling of <header> with position:fixed + z-[60] so it
+  sits above the drawer (z-50) and the morph animation stays visible
+  when the drawer is open.
+-->
+<button
+  type="button"
+  data-mobile-toggle
+  aria-label="Open menu"
+  aria-expanded="false"
+  aria-controls="mobile-drawer"
+  class:list={[
+    "md:hidden fixed z-[60] inline-flex h-10 w-10 items-center justify-center rounded transition-[color,top] duration-300",
+    heroHeader ? "text-white" : "text-[var(--color-text)]",
+  ]}
+  style="right: clamp(20px, 5.5vw, 80px); top: 28px;"
+>
+  <span class="hamburger-bar hamburger-bar-top" aria-hidden="true"></span>
+  <span class="hamburger-bar hamburger-bar-mid" aria-hidden="true"></span>
+  <span class="hamburger-bar hamburger-bar-bot" aria-hidden="true"></span>
+</button>
+
+<!-- ── Mobile drawer ──────────────────────────────────── -->
+<!--
+  Sits outside the <header> so it can use position: fixed without
+  inheriting the header's transition styles, and so it can sit above
+  the header in z-index when open.
+-->
+<div
+  id="mobile-drawer"
+  data-mobile-drawer
+  class="fixed inset-0 z-50 md:hidden pointer-events-none"
+  aria-hidden="true"
+>
+  <!-- Backdrop — inline styles for the same reason as the panel -->
+  <div
+    data-drawer-backdrop
+    style="
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      transition: opacity 400ms ease-out;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    "
+  ></div>
+
+  <!--
+    Panel — full-viewport width on mobile.
+    Visibility-critical styles are inline so we don't depend on
+    Tailwind utility resolution for the drawer to render.
+  -->
+  <aside
+    data-drawer-panel
+    role="dialog"
+    aria-modal="true"
+    aria-label="Site navigation"
+    class="flex flex-col"
+    style="
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 100%;
+      background-color: #203864;
+      color: #ffffff;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 500ms cubic-bezier(0.19, 1, 0.22, 1),
+                  visibility 0s linear 500ms;
+      z-index: 1;
+    "
+  >
+    <!--
+      Drawer header — just the logo. The morphing hamburger (which is
+      now an X when the drawer is open) handles closing, so we don't
+      need a separate close button.
+    -->
+    <div
+      class="flex items-center border-b border-white/10"
+      style="padding-inline: clamp(20px, 5.5vw, 32px); padding-block: 20px;"
+    >
+      <a href="/" data-drawer-link aria-label="Bluestone home" class="block w-[180px]">
+        <Logo class="h-auto w-full text-white" />
+      </a>
+    </div>
+
+    <!-- Drawer nav -->
+    <nav aria-label="Mobile primary" class="flex-1 overflow-y-auto px-6 py-8">
+      <ul class="flex flex-col gap-6">
+        {
+          nav.map((item, i) => (
+            <li>
+              <a
+                href={item.href}
+                data-drawer-link
+                style={`--i:${i}`}
+                class="drawer-link group flex items-center justify-between gap-4 font-display text-[clamp(28px,7vw,40px)] leading-tight text-white"
+              >
+                <span class="relative">
+                  {item.label}
+                  <span class="absolute left-0 -bottom-1 h-[1px] w-full origin-left scale-x-0 bg-white transition-transform duration-400 ease-out group-hover:scale-x-100" />
+                </span>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  class="opacity-50 transition-[opacity,transform] duration-300 group-hover:opacity-100 group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  <path d="M3 9h12M10 4l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <!-- Drawer footer -->
+    <div class="p-6 border-t border-white/10 text-white/60 body-s">
+      <p>1650 Tysons Blvd. Suite 810</p>
+      <p>McLean, VA 22102</p>
+      <p class="mt-2">(703) 462-5600</p>
+    </div>
+  </aside>
+</div>
+
+<style>
+  /* ── Hamburger → X transform ── */
+  .hamburger-bar {
+    position: absolute;
+    left: 9px;
+    width: 22px;
+    height: 1.5px;
+    background-color: currentColor;
+    border-radius: 2px;
+    transition: transform 550ms cubic-bezier(0.19, 1, 0.22, 1),
+                opacity 320ms ease;
+    transform-origin: center;
+  }
+  .hamburger-bar-top { top: 13px; }
+  .hamburger-bar-mid { top: 19.25px; }
+  .hamburger-bar-bot { top: 25.5px; }
+
+  [data-mobile-toggle][aria-expanded="true"] .hamburger-bar-top {
+    transform: translateY(6.25px) rotate(45deg);
+  }
+  [data-mobile-toggle][aria-expanded="true"] .hamburger-bar-mid {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  [data-mobile-toggle][aria-expanded="true"] .hamburger-bar-bot {
+    transform: translateY(-6.25px) rotate(-45deg);
+  }
+
+  /* ── Drawer open state ── */
+  [data-mobile-drawer][data-open="true"] {
+    pointer-events: auto;
+  }
+  [data-mobile-drawer][data-open="true"] [data-drawer-backdrop] {
+    opacity: 1;
+  }
+  [data-mobile-drawer][data-open="true"] [data-drawer-panel] {
+    transform: translateX(0);
+  }
+
+  /* ── Drawer link stagger reveal (top → bottom) ── */
+  /*
+    Default state is visible. The entry animation is purely additive,
+    so if it fails for any reason the links still render.
+    On open, each link fades + drops down from above with a stagger,
+    creating a top-to-bottom cascade.
+  */
+  .drawer-link {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  [data-mobile-drawer][data-open="true"] .drawer-link {
+    animation: drawer-link-fade 0.7s cubic-bezier(0.19, 1, 0.22, 1) both;
+    /* Each link starts after the panel is partway through its fade,
+       and they cascade ~110ms apart for a clear top-to-bottom rhythm. */
+    animation-delay: calc(0.25s + var(--i, 0) * 0.11s);
+  }
+  @keyframes drawer-link-fade {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drawer-link { animation: none !important; }
+    [data-drawer-panel] { transition: none !important; }
+    [data-drawer-backdrop] { transition: none !important; }
+  }
+</style>
+
+<script>
+  // ────────────────────────────────────────────────────
+  // Header scroll-state (transparent ↔ white)
+  // ────────────────────────────────────────────────────
+  const header = document.querySelector<HTMLElement>("[data-header]");
+  const headerInner = document.querySelector<HTMLElement>("[data-header-inner]");
+  // The mobile toggle is rendered as a SIBLING of the header (so it can
+  // sit above the drawer in z-index) — query the document, not the header.
+  const mobileToggle = document.querySelector<HTMLElement>("[data-mobile-toggle]");
+
+  if (header) {
+    const heroMode = header.dataset.heroHeader === "true";
+
+    // Keep the fixed-position hamburger button vertically centered with the
+    // logo by measuring the header's current height each frame. The button
+    // is a sibling of <header> (so it can sit above the drawer in z-index),
+    // which means it can't rely on flex centering — JS bridges the gap.
+    const alignToggle = () => {
+      if (!mobileToggle || !header) return;
+      const h = header.getBoundingClientRect().height;
+      const btnH = mobileToggle.getBoundingClientRect().height || 40;
+      mobileToggle.style.top = `${Math.max(0, (h - btnH) / 2)}px`;
+    };
+
+    const update = () => {
+      const scrolled = window.scrollY > 80;
+      if (heroMode) {
+        header.classList.toggle("bg-transparent", !scrolled);
+        header.classList.toggle("bg-white/90", scrolled);
+        header.classList.toggle("backdrop-blur-md", scrolled);
+        header.classList.toggle("shadow-sm", scrolled);
+
+        header.querySelectorAll<HTMLElement>("nav a").forEach((a) => {
+          a.classList.toggle("text-white", !scrolled);
+          a.classList.toggle("text-[var(--color-text)]", scrolled);
+        });
+
+        // Mobile toggle bar colour follows the same flip — but DON'T
+        // override if the drawer is currently open (it forces white via
+        // inline style so the X stays visible on the navy panel).
+        if (mobileToggle && mobileToggle.getAttribute("aria-expanded") !== "true") {
+          mobileToggle.classList.toggle("text-white", !scrolled);
+          mobileToggle.classList.toggle("text-[var(--color-text)]", scrolled);
+        }
+
+        const logoSvg = header.querySelector<SVGElement>("svg.logo");
+        if (logoSvg) logoSvg.style.color = scrolled ? "var(--color-primary)" : "white";
+      }
+      // Shrink the inner container's vertical padding on scroll
+      // (20px → 10px) for a subtle "compact" sticky header.
+      if (headerInner) {
+        headerInner.style.paddingBlock = scrolled ? "10px" : "20px";
+      }
+      // Re-center the hamburger after padding changes; the height change
+      // is animated (500ms) so we run alignment a few frames into the
+      // transition too. requestAnimationFrame handles the first repaint;
+      // a short timeout covers the end of the padding transition.
+      alignToggle();
+      window.setTimeout(alignToggle, 520);
+    };
+    update();
+    alignToggle();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", alignToggle, { passive: true });
+    // Re-align once webfonts have loaded — the logo SVG height can shift
+    // a hair as the document layout settles.
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(alignToggle).catch(() => {});
+    }
+  }
+
+  // ────────────────────────────────────────────────────
+  // Mobile drawer — inline-style driven so it's bulletproof against
+  // CSS scoping / specificity quirks. Transitions stay declarative.
+  // ────────────────────────────────────────────────────
+  const drawer = document.querySelector<HTMLElement>("[data-mobile-drawer]");
+  const toggle = document.querySelector<HTMLButtonElement>("[data-mobile-toggle]");
+  const backdrop = document.querySelector<HTMLElement>("[data-drawer-backdrop]");
+  const panel = document.querySelector<HTMLElement>("[data-drawer-panel]");
+  const links = document.querySelectorAll<HTMLAnchorElement>("[data-drawer-link]");
+
+  if (drawer && toggle && panel && backdrop) {
+    let lastFocused: HTMLElement | null = null;
+    let isOpen = false;
+
+    const open = () => {
+      isOpen = true;
+      lastFocused = document.activeElement as HTMLElement;
+      drawer.dataset.open = "true";
+      drawer.setAttribute("aria-hidden", "false");
+      toggle.setAttribute("aria-expanded", "true");
+      toggle.setAttribute("aria-label", "Close menu");
+
+      // Force visual state via inline styles — bypasses any
+      // cascade/scope issue with the data-open CSS rules.
+      drawer.style.pointerEvents = "auto";
+      backdrop.style.opacity = "1";
+      // Make the panel paintable, then fade it in. Setting visibility
+      // before opacity so the transition can run.
+      panel.style.visibility = "visible";
+      panel.style.transition = "opacity 500ms cubic-bezier(0.19, 1, 0.22, 1)";
+      // Force a reflow so the visibility flip is applied before opacity changes
+      // (otherwise the browser may batch them and skip the transition).
+      void panel.offsetWidth;
+      panel.style.opacity = "1";
+
+      // Toggle bars need to be white over the navy panel
+      toggle.style.color = "#ffffff";
+
+      document.documentElement.style.overflow = "hidden";
+    };
+
+    const close = () => {
+      isOpen = false;
+      drawer.dataset.open = "false";
+      drawer.setAttribute("aria-hidden", "true");
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-label", "Open menu");
+
+      drawer.style.pointerEvents = "none";
+      backdrop.style.opacity = "0";
+      panel.style.opacity = "0";
+      // Re-add the visibility delay so the panel can still receive focus
+      // during the fade-out, then disappear cleanly afterward.
+      panel.style.transition = "opacity 400ms cubic-bezier(0.19, 1, 0.22, 1), visibility 0s linear 400ms";
+      panel.style.visibility = "hidden";
+
+      // Drop the inline white override so the scroll-state CSS resumes control
+      toggle.style.color = "";
+
+      document.documentElement.style.overflow = "";
+      lastFocused?.focus();
+    };
+
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      isOpen ? close() : open();
+    });
+    backdrop.addEventListener("click", close);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && isOpen) close();
+    });
+
+    links.forEach((link) =>
+      link.addEventListener("click", () => setTimeout(close, 50)),
+    );
+
+    const mq = window.matchMedia("(min-width: 768px)");
+    mq.addEventListener("change", (e) => {
+      if (e.matches && isOpen) close();
+    });
+  } else {
+    // Surface a clear console error so we can spot scaffolding issues
+    console.warn("[Header] Drawer elements missing", { drawer, toggle, panel, backdrop });
+  }
+</script>

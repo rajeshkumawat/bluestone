@@ -1,0 +1,220 @@
+---
+/**
+ * 404 — Page Not Found.
+ *
+ * Per Figma frame 8243:4068:
+ *   – Big "404" watermark behind the title (256px Liberation Bold, 5% navy)
+ *   – Centered "Page Not Found" h1, subtitle, two CTAs
+ *   – "You Might Also Be Looking For" section with three quick links
+ *
+ * Astro renders /404.astro automatically when a route doesn't match
+ * (in production builds via the host's not-found handler; in dev via
+ * its 404 page).
+ */
+import BaseLayout from "@layouts/BaseLayout.astro";
+import Button from "@components/ui/Button.astro";
+---
+
+<BaseLayout title="Page Not Found" description="The page you're looking for doesn't exist.">
+  {/* ── Hero with big 404 watermark ───────────────────────── */}
+  <section class="bg-[var(--color-bg)] section relative overflow-hidden">
+    <div class="container-max relative">
+      {/* Watermark "404" — sits behind, centered, ultra-faded */}
+      <div
+        aria-hidden="true"
+        class="absolute left-1/2 -translate-x-1/2 -top-12 sm:-top-20 select-none pointer-events-none"
+        style="
+          font-family: var(--font-display);
+          font-size: clamp(160px, 26vw, 320px);
+          font-weight: 700;
+          line-height: 1;
+          color: var(--color-primary-20);
+          opacity: 0.25;
+        "
+      >
+        404
+      </div>
+
+      {/* Foreground content */}
+      <div data-not-found-content class="relative flex flex-col items-center text-center gap-4 pt-16 sm:pt-24 lg:pt-32">
+        <h1 data-not-found-title class="h1 text-[var(--color-text)]">Page Not Found</h1>
+        <p data-not-found-subtitle class="body-l max-w-[60ch] text-[var(--color-text)]">
+          The page you're looking for doesn't exist or may have been moved. Let's get you back on track.
+        </p>
+        <div data-not-found-ctas class="mt-6 flex flex-wrap gap-4 items-center justify-center">
+          <Button label="View Investments" href="/investments" variant="primary" />
+          <Button label="Contact Us" href="/contact" variant="outline" arrow={false} />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ── Suggested destinations ────────────────────────────── */}
+  <section class="section bg-[var(--color-bg)]">
+    <div class="container-max flex flex-col items-center gap-8">
+      <h2 data-suggest-title class="h2 text-center text-[var(--color-text)]">
+        You Might Also Be Looking For
+      </h2>
+
+      <ul data-suggest-grid class="grid gap-6 w-full sm:grid-cols-2 lg:grid-cols-3">
+        {
+          [
+            {
+              href: "/about",
+              title: "About Us",
+              icon: "info",
+              tone: "light" as const,
+            },
+            {
+              href: "/investments",
+              title: "Investments",
+              icon: "briefcase",
+              tone: "light" as const,
+            },
+            {
+              href: "/team",
+              title: "Our Team",
+              icon: "users",
+              tone: "primary" as const,
+            },
+          ].map((card) => (
+            <li data-suggest-card>
+              <a
+                href={card.href}
+                class:list={[
+                  "group flex flex-col items-center justify-center gap-4 px-6 py-12 rounded-[10px] h-full transition-[transform,box-shadow] duration-300 hover:-translate-y-1",
+                  card.tone === "primary"
+                    ? "bg-[var(--color-primary)] text-[var(--color-bg)] hover:shadow-[0_20px_30px_-15px_rgba(32,56,100,0.3)]"
+                    : "bg-[var(--color-secondary)] text-[var(--color-text)] hover:shadow-[0_20px_30px_-15px_rgba(32,56,100,0.18)]",
+                ]}
+              >
+                {/* Icon medallion */}
+                <div
+                  class:list={[
+                    "flex h-20 w-20 items-center justify-center rounded-full transition-colors duration-300",
+                    card.tone === "primary"
+                      ? "bg-[var(--color-bg)]/15 text-[var(--color-bg)] group-hover:bg-[var(--color-bg)]/25"
+                      : "bg-[var(--color-tertiary)] text-[var(--color-primary)] group-hover:bg-[var(--color-primary)] group-hover:text-[var(--color-bg)]",
+                  ]}
+                >
+                  {card.icon === "info" && (
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" />
+                      <circle cx="12" cy="8" r="1" fill="currentColor" />
+                      <path d="M12 11v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  )}
+                  {card.icon === "briefcase" && (
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M3 13h18" stroke="currentColor" stroke-width="1.6" />
+                    </svg>
+                  )}
+                  {card.icon === "users" && (
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="9" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M2.5 19a6.5 6.5 0 0113 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      <circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M17 13a4.5 4.5 0 014.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  )}
+                </div>
+
+                <h3 class="font-display text-[clamp(24px,2.6vw,36px)] leading-tight text-center">
+                  {card.title}
+                </h3>
+
+                {/* "View" affordance */}
+                <span
+                  class:list={[
+                    "body-l tracking-[1px] inline-flex items-center gap-1 mt-2",
+                    card.tone === "primary" ? "text-[var(--color-bg)]" : "text-[var(--color-primary)]",
+                  ]}
+                >
+                  <span class="relative">
+                    View
+                    <span
+                      class:list={[
+                        "absolute left-0 -bottom-0.5 h-px w-full origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100",
+                        card.tone === "primary" ? "bg-[var(--color-bg)]" : "bg-[var(--color-primary)]",
+                      ]}
+                    />
+                  </span>
+                  <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <style>
+    /*
+      Hero entrance — CSS-driven so it doesn't flash. Suggested cards
+      below use scroll-trigger in JS (they're below the fold).
+    */
+    [data-not-found-title],
+    [data-not-found-subtitle],
+    [data-not-found-ctas] {
+      opacity: 0;
+      animation-fill-mode: forwards;
+      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    [data-not-found-title] {
+      transform: translateY(24px);
+      animation-name: nf-fade-up;
+      animation-duration: 1s;
+    }
+    [data-not-found-subtitle] {
+      transform: translateY(16px);
+      animation-name: nf-fade-up;
+      animation-duration: 0.9s;
+      animation-delay: 0.15s;
+    }
+    [data-not-found-ctas] {
+      transform: translateY(16px);
+      animation-name: nf-fade-up;
+      animation-duration: 0.9s;
+      animation-delay: 0.3s;
+    }
+    @keyframes nf-fade-up {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      [data-not-found-title],
+      [data-not-found-subtitle],
+      [data-not-found-ctas] {
+        opacity: 1;
+        transform: none;
+        animation: none;
+      }
+    }
+  </style>
+
+  <script>
+    import { gsap } from "@lib/animations";
+
+    // Hero entrance is CSS-driven (see <style> above).
+    // Suggested cards are below the fold → scroll-triggered, stays in JS.
+    gsap.from("[data-suggest-title]", {
+      opacity: 0,
+      y: 20,
+      duration: 0.9,
+      ease: "expo.out",
+      scrollTrigger: { trigger: "[data-suggest-title]", start: "top 85%", once: true },
+    });
+    gsap.from("[data-suggest-card]", {
+      opacity: 0,
+      y: 30,
+      duration: 0.9,
+      stagger: 0.1,
+      ease: "expo.out",
+      scrollTrigger: { trigger: "[data-suggest-grid]", start: "top 85%", once: true },
+    });
+  </script>
+</BaseLayout>

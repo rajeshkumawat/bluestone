@@ -1,0 +1,88 @@
+---
+import type { NewsBlock } from "@content";
+import Button from "@components/ui/Button.astro";
+import { getArticles } from "@content";
+
+type Props = NewsBlock;
+const { title, articleSlugs, cta } = Astro.props;
+
+const all = await getArticles();
+const articles = articleSlugs
+  ? (articleSlugs.map((s) => all.find((a) => a.slug === s)).filter(Boolean) as typeof all)
+  : all.slice(0, 3);
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+---
+
+<section data-block="news" class="section bg-[var(--color-tertiary)]">
+  <div class="container-max flex flex-col gap-12">
+    <!-- Header row: title left, CTA right -->
+    <div class="flex items-end justify-between gap-6 flex-wrap">
+      <h2 data-news-title class="h2 text-[var(--color-text)]">{title}</h2>
+      <div data-news-cta>
+        <Button {...cta} />
+      </div>
+    </div>
+
+    <!-- Article grid — 3 cols on desktop, 1 on mobile -->
+    <ul data-news-grid class="grid gap-8 md:grid-cols-3 md:gap-6">
+      {
+        articles.map((a) => (
+          <li
+            data-news-card
+            class="group flex flex-col border-t-2 border-[var(--color-primary)] pt-6 pb-2"
+          >
+            <div class="flex flex-col flex-1">
+              {/* Date */}
+              <p class="body-s text-[var(--color-text)] opacity-60 mb-3">
+                {formatDate(a.publishedAt)}
+              </p>
+
+              {/* Title — min-h holds a consistent 4-line slot across all cards */}
+              <h3 class="h4 text-[var(--color-primary)] transition-colors duration-300 group-hover:opacity-80 md:min-h-[125px]">
+                {a.shortTitle ?? a.title}
+              </h3>
+            </div>
+
+            <a
+              href={`/news/${a.slug}`}
+              class="group/link mt-8 self-start body-l tracking-[1px] text-[var(--color-primary)] inline-flex items-center gap-1"
+            >
+              <span class="relative">
+                Read More
+                <span class="absolute left-0 -bottom-0.5 h-px w-full origin-left scale-x-0 bg-[var(--color-primary)] transition-transform duration-300 group-hover/link:scale-x-100" />
+              </span>
+              <span aria-hidden="true" class="transition-transform duration-300 group-hover/link:translate-x-1">→</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  import { gsap, setupBatchReveal } from "@lib/animations";
+
+  gsap.from("[data-news-title]", {
+    opacity: 0,
+    y: 24,
+    duration: 1,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-news-title]", start: "top 85%", once: true },
+  });
+
+  gsap.from("[data-news-cta]", {
+    opacity: 0,
+    y: 16,
+    duration: 0.8,
+    ease: "expo.out",
+    delay: 0.2,
+    scrollTrigger: { trigger: "[data-news-cta]", start: "top 90%", once: true },
+  });
+
+  // Each card reveals as IT enters the viewport (with batched stagger
+  // when several cross at once). Replaces the "all-at-once" pattern.
+  setupBatchReveal("[data-news-card]", { y: 30, stagger: 0.1, start: "top 90%" });
+</script>

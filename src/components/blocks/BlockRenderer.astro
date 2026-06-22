@@ -1,0 +1,80 @@
+---
+/**
+ * BlockRenderer — switches over a Block discriminated union and
+ * renders the matching component. Adding a new block type =
+ * add a case here and a component file.
+ */
+import type { Block } from "@content";
+
+import HeroBlock from "./HeroBlock.astro";
+import IntroStatsBlock from "./IntroStatsBlock.astro";
+import PartnersForGrowthBlock from "./PartnersForGrowthBlock.astro";
+import PortfolioMarqueeBlock from "./PortfolioMarqueeBlock.astro";
+import NewsBlock from "./NewsBlock.astro";
+import CenteredIntroBlock from "./CenteredIntroBlock.astro";
+import SectorFocusBlock from "./SectorFocusBlock.astro";
+import ApproachCardsBlock from "./ApproachCardsBlock.astro";
+import QuoteBlock from "./QuoteBlock.astro";
+import InvestmentCriteriaBlock from "./InvestmentCriteriaBlock.astro";
+import PageHeaderBlock from "./PageHeaderBlock.astro";
+import TeamGridBlock from "./TeamGridBlock.astro";
+import NewsListBlock from "./NewsListBlock.astro";
+import ArticleBlock from "./ArticleBlock.astro";
+import ContactBlock from "./ContactBlock.astro";
+import LegalPageBlock from "./LegalPageBlock.astro";
+import InvestmentsListBlock from "./InvestmentsListBlock.astro";
+import InvestmentDetailBlock from "./InvestmentDetailBlock.astro";
+
+interface Props {
+  blocks: Block[];
+}
+const { blocks } = Astro.props;
+---
+
+{
+  blocks.map((block) => {
+    switch (block.type) {
+      case "hero":
+        return <HeroBlock {...block} />;
+      case "intro-stats":
+        return <IntroStatsBlock {...block} />;
+      case "partners-for-growth":
+        return <PartnersForGrowthBlock {...block} />;
+      case "portfolio-marquee":
+        return <PortfolioMarqueeBlock {...block} />;
+      case "news":
+        return <NewsBlock {...block} />;
+      case "centered-intro":
+        return <CenteredIntroBlock {...block} />;
+      case "sector-focus":
+        return <SectorFocusBlock {...block} />;
+      case "approach-cards":
+        return <ApproachCardsBlock {...block} />;
+      case "quote":
+        return <QuoteBlock {...block} />;
+      case "investment-criteria":
+        return <InvestmentCriteriaBlock {...block} />;
+      case "page-header":
+        return <PageHeaderBlock {...block} />;
+      case "team-grid":
+        return <TeamGridBlock {...block} />;
+      case "news-list":
+        return <NewsListBlock {...block} />;
+      case "article":
+        return <ArticleBlock {...block} />;
+      case "contact":
+        return <ContactBlock {...block} />;
+      case "legal-page":
+        return <LegalPageBlock {...block} />;
+      case "investments-list":
+        return <InvestmentsListBlock {...block} />;
+      case "investment-detail":
+        return <InvestmentDetailBlock {...block} />;
+      default: {
+        // Compile-time exhaustiveness check
+        const _exhaustive: never = block;
+        return null;
+      }
+    }
+  })
+}

@@ -1,0 +1,22 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import BlockRenderer from "@components/blocks/BlockRenderer.astro";
+import { getParentInvestments, getInvestmentBySlug } from "@content";
+
+export async function getStaticPaths() {
+  // Only parent companies get their own detail page.
+  // Child companies (parentSlug set) link to their parent's page instead.
+  const items = await getParentInvestments();
+  return items.map((i) => ({ params: { slug: i.slug } }));
+}
+
+const { slug } = Astro.params;
+const inv = await getInvestmentBySlug(slug!);
+if (!inv) return Astro.redirect("/investments");
+
+const blocks = [{ type: "investment-detail" as const, slug: slug! }];
+---
+
+<BaseLayout title={inv.name} description={inv.tagline}>
+  <BlockRenderer blocks={blocks} />
+</BaseLayout>

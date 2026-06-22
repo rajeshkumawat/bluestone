@@ -1,0 +1,16 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import BlockRenderer from "@components/blocks/BlockRenderer.astro";
+import { getPage } from "@content";
+
+const about = await getPage("about");
+if (!about) throw new Error("about page content missing");
+---
+
+<!--
+  heroHeader = true → header starts transparent over the dark hero
+  and flips to a white frosted bar on scroll, matching the home page.
+-->
+<BaseLayout title="About Bluestone Investment Partners" description="Learn how Bluestone partners with defense and government technology leadership teams to accelerate growth and create long-term value." heroHeader>
+  <BlockRenderer blocks={about.blocks} />
+</BaseLayout>

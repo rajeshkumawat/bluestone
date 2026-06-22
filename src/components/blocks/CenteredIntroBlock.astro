@@ -1,0 +1,91 @@
+---
+/**
+ * Centered intro — heading + paragraphs.
+ *
+ * Supports two layouts:
+ *   - "centered" (default): heading and paragraphs centered on a
+ *     tone-able background. Used historically for "Our Firm" on About
+ *     when it was a single dark navy section.
+ *   - "split": heading and paragraphs left-aligned on the light bg,
+ *     with a navy diagonal-parallelogram graphic accent on the right.
+ *     This is the new About → "Our Firm" treatment per client feedback.
+ */
+import type { CenteredIntroBlock } from "@content";
+
+type Props = CenteredIntroBlock;
+const { title, paragraphs, tone = "primary", layout = "centered" } = Astro.props;
+
+// In "split" layout the bg is always the light off-white and tone is ignored.
+const bgClass =
+  layout === "split"
+    ? "bg-[var(--color-bg)] text-[var(--color-text)]"
+    : tone === "primary"
+      ? "bg-[var(--color-primary)] text-white"
+      : tone === "tertiary"
+        ? "bg-[var(--color-tertiary)] text-[var(--color-text)]"
+        : "bg-[var(--color-bg)] text-[var(--color-text)]";
+---
+
+{
+  layout === "split" ? (
+    <section data-block="centered-intro" data-layout="split" class:list={["section relative overflow-hidden", bgClass]}>
+      {/*
+        Decorative navy parallelogram on the right side. Pure CSS clip-path —
+        no asset needed. Hidden on small screens to keep mobile clean.
+        Width and clip-path tuned to match the Figma: navy occupies roughly
+        the right ~50 % of the section at the top, slanting in to ~30 % at
+        the bottom (clip-path is relative to the container, not the section).
+      */}
+      <div
+        aria-hidden="true"
+        class="absolute inset-y-0 right-0 hidden md:block pointer-events-none"
+        style="
+          width: clamp(360px, 50vw, 760px);
+          background: var(--color-primary);
+          clip-path: polygon(0 0, 100% 0, 100% 100%, 40% 100%);
+        "
+      />
+      <div class="container-max relative">
+        <div class="max-w-2xl">
+          <h2 data-intro-title class="h1 text-[var(--color-text)]">{title}</h2>
+          <div class="mt-6 flex flex-col gap-4">
+            {paragraphs.map((p) => (
+              <p data-intro-para class="body-l text-[var(--color-text)]">{p}</p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  ) : (
+    <section data-block="centered-intro" data-layout="centered" class:list={["section", bgClass]}>
+      <div class="container-max flex flex-col items-center text-center" style="max-width: 720px; margin-inline: auto;">
+        <h2 data-intro-title class="h2">{title}</h2>
+        <div class="mt-4 flex flex-col gap-4">
+          {paragraphs.map((p) => <p data-intro-para class="body-m">{p}</p>)}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { gsap } from "@lib/animations";
+
+  gsap.from("[data-intro-title]", {
+    opacity: 0,
+    y: 24,
+    duration: 1,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-intro-title]", start: "top 85%", once: true },
+  });
+
+  gsap.from("[data-intro-para]", {
+    opacity: 0,
+    y: 16,
+    duration: 0.9,
+    stagger: 0.12,
+    ease: "expo.out",
+    delay: 0.15,
+    scrollTrigger: { trigger: "[data-intro-title]", start: "top 85%", once: true },
+  });
+</script>

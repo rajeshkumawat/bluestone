@@ -1,0 +1,16 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import BlockRenderer from "@components/blocks/BlockRenderer.astro";
+import { getPage } from "@content";
+
+const news = await getPage("news");
+if (!news) throw new Error("news page content missing");
+---
+
+<!--
+  No heroHeader prop — News list page uses a light-bg page header,
+  so the global header sits naturally on white from the start.
+-->
+<BaseLayout title="Bluestone Investment Partners News" description="Read the latest Bluestone Investment Partners news, including acquisitions, exits, strategic investments, mergers, and portfolio company updates.">
+  <BlockRenderer blocks={news.blocks} />
+</BaseLayout>

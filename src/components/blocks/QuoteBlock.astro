@@ -1,0 +1,262 @@
+---
+/**
+ * Quote / Testimonial — auto-rotating carousel.
+ *
+ * Per Figma frame 8287:2616:
+ *   – Card with photo + quote + author/title
+ *   – Decorative big quote mark in the top-left, fading to bg
+ *   – Below the card: a horizontal progress rail.
+ *     A navy bar fills left → right over `intervalSeconds`,
+ *     then the next quote crossfades in and the bar resets.
+ *   – Pause on hover so users can read.
+ *   – Click anywhere on the rail (or a segment) to jump.
+ */
+import type { QuoteBlock } from "@content";
+
+type Props = QuoteBlock;
+const { quotes, intervalSeconds = 8 } = Astro.props;
+const hasMultiple = quotes.length > 1;
+---
+
+<section data-block="quote" class="section bg-[var(--color-bg)]">
+  <div class="container-max">
+    <div
+      data-quote-card
+      data-interval-ms={intervalSeconds * 1000}
+      class="relative bg-[var(--color-tertiary)] rounded-[10px] overflow-hidden"
+      style="padding: clamp(28px, 4.5vw, 56px);"
+    >
+      <!-- Decorative big quote mark -->
+      <div
+        aria-hidden="true"
+        class="absolute -top-6 left-4 select-none pointer-events-none"
+        style="font-family: var(--font-display); font-size: clamp(140px, 18vw, 220px); line-height: 1; color: transparent; background: linear-gradient(90deg, var(--color-primary-20) 0%, var(--color-tertiary) 80%); -webkit-background-clip: text; background-clip: text;"
+      >
+        “
+      </div>
+
+      <!--
+        Slides container — every testimonial is rendered, stacked
+        absolutely. Only the active one has opacity 1; others are
+        opacity 0 with pointer-events disabled. Crossfade transitions
+        the swap.
+
+        `pb-16` on the inner row reserves space for the absolutely-
+        positioned prev/next nav buttons in the card's bottom-right
+        so they never overlap the author/title text.
+      -->
+      <div class="relative" style="min-height: clamp(220px, 18vw, 260px);">
+        {
+          quotes.map((q, i) => (
+            <article
+              data-quote-slide
+              data-index={i}
+              class:list={[
+                "transition-opacity duration-500 ease-out",
+                i === 0
+                  ? "opacity-100 relative"
+                  : "opacity-0 absolute inset-0 pointer-events-none",
+              ]}
+            >
+              <div class="relative flex flex-col gap-8 pb-14 sm:flex-row sm:items-center sm:gap-12 sm:pb-12">
+                <div class="shrink-0 self-center sm:self-start">
+                  <img
+                    src={q.authorPhoto}
+                    alt={q.author}
+                    class="block h-[160px] w-[160px] sm:h-[200px] sm:w-[200px] rounded-full object-cover shadow-md"
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                </div>
+                <div class="flex-1 flex flex-col gap-4 text-[var(--color-text)]">
+                  <p class="body-l max-w-[58ch]">{q.quote}</p>
+                  <div class="flex flex-col gap-1">
+                    <p class="font-display text-[clamp(28px,2.4vw,36px)] leading-tight text-[var(--color-primary)]">
+                      {q.author}
+                    </p>
+                    <p class="body-l tracking-[1px] uppercase opacity-80">{q.authorTitle}</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+
+      {/* Prev / Next nav buttons (only when there are multiple quotes) */}
+      {
+        hasMultiple && (
+          <div
+            class="absolute flex gap-2"
+            style="bottom: clamp(28px, 4.5vw, 56px); right: clamp(28px, 4.5vw, 56px);"
+          >
+            <button
+              type="button"
+              data-quote-prev
+              aria-label="Previous testimonial"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-[6px] border border-[var(--color-primary)] text-[var(--color-primary)] transition-colors duration-200 hover:bg-[var(--color-primary)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] cursor-pointer"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              data-quote-next
+              aria-label="Next testimonial"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-[6px] border border-[var(--color-primary)] text-[var(--color-primary)] transition-colors duration-200 hover:bg-[var(--color-primary)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] cursor-pointer"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        )
+      }
+    </div>
+
+    <!--
+      Progress rail — shown only when there are multiple quotes.
+      One segment per quote. Active segment fills navy left→right
+      over `intervalSeconds`; inactive segments are flat grey.
+      Click a segment to jump.
+    -->
+    {
+      hasMultiple && (
+        <div data-quote-rail class="mt-8 flex items-center gap-3">
+          {quotes.map((_, i) => (
+            <button
+              type="button"
+              data-rail-segment
+              data-index={i}
+              aria-label={`Show testimonial ${i + 1}`}
+              class="group relative flex-1 h-[2px] cursor-pointer"
+            >
+              <span class="absolute inset-0 rounded-full bg-[var(--color-primary-20)]" />
+              <span
+                data-rail-fill
+                class="absolute inset-y-0 left-0 rounded-full bg-[var(--color-primary)]"
+                style="width: 0%;"
+              />
+            </button>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<script>
+  import { gsap } from "@lib/animations";
+
+  // ── Reveal the card on scroll ──
+  gsap.from("[data-quote-card]", {
+    opacity: 0,
+    y: 30,
+    duration: 1,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-quote-card]", start: "top 85%", once: true },
+  });
+
+  // ── Carousel logic ──
+  const card = document.querySelector<HTMLElement>("[data-quote-card]");
+  const slides = Array.from(document.querySelectorAll<HTMLElement>("[data-quote-slide]"));
+  const segments = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-rail-segment]"));
+  const fills = segments.map((s) => s.querySelector<HTMLElement>("[data-rail-fill]")!);
+
+  if (card && slides.length > 1) {
+    const intervalMs = parseInt(card.dataset.intervalMs ?? "8000", 10);
+    let index = 0;
+    let progressTween: gsap.core.Tween | null = null;
+    let paused = false;
+
+    const setActive = (i: number) => {
+      slides.forEach((s, j) => {
+        const isActive = j === i;
+        s.classList.toggle("opacity-100", isActive);
+        s.classList.toggle("opacity-0", !isActive);
+        s.classList.toggle("pointer-events-none", !isActive);
+        s.classList.toggle("absolute", !isActive);
+        s.classList.toggle("inset-0", !isActive);
+        s.classList.toggle("relative", isActive);
+      });
+
+      // Reset all rail fills, then animate the active one
+      fills.forEach((f, j) => {
+        progressTween?.kill();
+        if (j === i) {
+          gsap.set(f, { width: "0%" });
+        } else if (j < i) {
+          gsap.set(f, { width: "100%" }); // mark previous as complete
+        } else {
+          gsap.set(f, { width: "0%" });
+        }
+      });
+
+      // Animate the active fill from 0 → 100% over intervalMs
+      const active = fills[i];
+      if (active) {
+        progressTween = gsap.to(active, {
+          width: "100%",
+          duration: intervalMs / 1000,
+          ease: "none",
+          onComplete: () => advance(),
+        });
+        if (paused) progressTween.pause();
+      }
+    };
+
+    const advance = () => {
+      index = (index + 1) % slides.length;
+      setActive(index);
+    };
+
+    const goTo = (i: number) => {
+      index = i;
+      setActive(index);
+    };
+
+    // Pause / resume on hover (desktop)
+    card.addEventListener("mouseenter", () => {
+      paused = true;
+      progressTween?.pause();
+    });
+    card.addEventListener("mouseleave", () => {
+      paused = false;
+      progressTween?.resume();
+    });
+
+    // Click rail segments to jump
+    segments.forEach((seg, i) => {
+      seg.addEventListener("click", () => goTo(i));
+    });
+
+    // Prev / Next nav buttons — wrap around at edges
+    const prevBtn = document.querySelector<HTMLButtonElement>("[data-quote-prev]");
+    const nextBtn = document.querySelector<HTMLButtonElement>("[data-quote-next]");
+    prevBtn?.addEventListener("click", () => {
+      goTo((index - 1 + slides.length) % slides.length);
+    });
+    nextBtn?.addEventListener("click", () => {
+      goTo((index + 1) % slides.length);
+    });
+
+    // Pause when the card scrolls out of view to save CPU + battery
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            if (!paused) progressTween?.resume();
+          } else {
+            progressTween?.pause();
+          }
+        });
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(card);
+
+    // Kick off the first slide's progress
+    setActive(0);
+  }
+</script>

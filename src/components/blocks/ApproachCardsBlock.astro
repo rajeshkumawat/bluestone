@@ -1,0 +1,77 @@
+---
+/**
+ * Approach Cards — heading + body + N image cards.
+ * Each card: tall image, navy gradient overlay (transparent → navy bottom),
+ * title positioned at the bottom-left.
+ *
+ * Per Figma frame 8287:2468 (Empowering Management Teams).
+ */
+import type { ApproachCardsBlock } from "@content";
+
+type Props = ApproachCardsBlock;
+const { title, body, cards } = Astro.props;
+---
+
+<section data-block="approach-cards" class="section bg-[var(--color-bg)]">
+  <div class="container-max flex flex-col gap-12">
+    <div class="flex flex-col gap-4">
+      <h2 data-approach-title class="h2 text-[var(--color-text)]">{title}</h2>
+      <p data-approach-body class="body-l text-[var(--color-text)]">{body}</p>
+    </div>
+
+    <ul data-approach-cards class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        cards.map((card) => (
+          <li
+            data-approach-card
+            class="group relative overflow-hidden rounded-[10px]"
+            style="height: clamp(240px, 28vw, 340px);"
+          >
+            <!-- Image with subtle hover zoom -->
+            <img
+              src={card.image}
+              alt={card.title}
+              class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+            />
+            <!-- Navy gradient overlay: transparent at top, navy at bottom -->
+            <div
+              aria-hidden="true"
+              class="absolute inset-0 transition-opacity duration-500 ease-out group-hover:opacity-90"
+              style="background: linear-gradient(to top, var(--color-primary) 0%, rgba(32,56,100,0.55) 35%, rgba(32,56,100,0) 75%);"
+            />
+            <!-- Title -->
+            <h3 class="absolute bottom-0 left-0 right-0 px-7 pb-7 font-display text-[clamp(22px,2vw,26px)] leading-tight text-[var(--color-bg)]">
+              {card.title}
+            </h3>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  import { gsap, setupBatchReveal } from "@lib/animations";
+
+  gsap.from("[data-approach-title]", {
+    opacity: 0,
+    y: 24,
+    duration: 1,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-approach-title]", start: "top 85%", once: true },
+  });
+  gsap.from("[data-approach-body]", {
+    opacity: 0,
+    y: 16,
+    duration: 0.9,
+    delay: 0.15,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-approach-title]", start: "top 85%", once: true },
+  });
+
+  // Cards reveal as each enters the viewport (batched with stagger
+  // when multiple cross at once on first paint).
+  setupBatchReveal("[data-approach-card]", { y: 30, stagger: 0.1, start: "top 90%" });
+</script>

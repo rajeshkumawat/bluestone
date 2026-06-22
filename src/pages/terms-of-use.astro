@@ -1,0 +1,12 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import BlockRenderer from "@components/blocks/BlockRenderer.astro";
+import { getPage } from "@content";
+
+const page = await getPage("terms-of-use");
+if (!page) throw new Error("terms-of-use page content missing");
+---
+
+<BaseLayout title={page.title} description={page.description}>
+  <BlockRenderer blocks={page.blocks} />
+</BaseLayout>

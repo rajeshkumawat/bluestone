@@ -1,0 +1,207 @@
+---
+/**
+ * Investment Detail — single portfolio company.
+ *
+ * Layout (revised per client approval May 2026):
+ *   – Single column, max-width 860px
+ *   – Logo top-left, smaller
+ *   – Description directly below logo (no "About the Company" heading)
+ *   – Platform Investment Date + Investment Status same font/size
+ *   – Platform acquisition logos larger
+ *   – Related news + website at bottom
+ *   – "Back to Investments" CTA
+ */
+import type { InvestmentDetailBlock } from "@content";
+import { getInvestmentBySlug, getArticles } from "@content";
+import Button from "@components/ui/Button.astro";
+
+type Props = InvestmentDetailBlock;
+const { slug } = Astro.props;
+
+const investment = await getInvestmentBySlug(slug);
+if (!investment) throw new Error(`investment not found: ${slug}`);
+
+const allArticles = await getArticles();
+const relatedNews = (investment.relatedNews ?? [])
+  .map((s) => allArticles.find((a) => a.slug === s))
+  .filter(Boolean) as typeof allArticles;
+
+const statusLabel = investment.status === "active" ? "Active" : "Realized";
+---
+
+<section data-block="investment-detail" class="section bg-[var(--color-bg)]">
+  <div class="container-max max-w-[860px] mx-auto flex flex-col gap-10">
+
+    {/* ── Logo — top left, smaller ── */}
+    <div data-detail-logo class="flex items-start">
+      <img
+        src={investment.featuredImage ?? investment.logo}
+        alt={investment.name}
+        class="h-auto object-contain"
+        style="max-height: 160px; max-width: 360px;"
+      />
+    </div>
+
+    {/* ── Description — directly below logo, no title ── */}
+    {
+      investment.description && investment.description.length > 0 && (
+        <div data-detail-copy class="flex flex-col gap-4">
+          {investment.description.map((p) => (
+            <p class="body-l text-[var(--color-text)]">{p}</p>
+          ))}
+        </div>
+      )
+    }
+
+    {/* ── Platform date + Status — same font & size ── */}
+    <div data-detail-meta class="flex flex-col gap-2">
+      {
+        investment.platformInvestmentDate && (
+          <p class="body-l text-[var(--color-text)]">
+            <span class="opacity-60">Platform Investment Date:</span>&nbsp;&nbsp;{investment.platformInvestmentDate}
+          </p>
+        )
+      }
+      <p class="body-l text-[var(--color-text)]">
+        <span class="opacity-60">Investment Status:</span>&nbsp;&nbsp;{statusLabel}
+      </p>
+    </div>
+
+    {/* ── Platform acquisitions — larger logos ── */}
+    {
+      investment.acquisitions && investment.acquisitions.length > 0 && (
+        <div data-detail-acquisitions class="flex flex-col gap-4">
+          <p class="text-[11px] font-semibold tracking-[1.32px] uppercase text-[var(--color-primary)]">
+            Platform Acquisitions
+          </p>
+          <div class="flex flex-wrap items-center gap-4">
+            {investment.acquisitions.map((a) => (
+              <div
+                class="flex items-center justify-center rounded-[10px] bg-white border border-[var(--color-primary-20)] p-5"
+                style="height: 90px; width: 220px;"
+                title={a.name}
+              >
+                <img
+                  src={a.logo}
+                  alt={a.name}
+                  class="object-contain"
+                  style="max-height: 50px; max-width: 160px;"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    {/* ── Related news ── */}
+    {
+      (relatedNews.length > 0 || (investment.externalNews && investment.externalNews.length > 0)) && (
+        <div data-detail-news class="flex flex-col gap-4">
+          <p class="text-[11px] font-semibold tracking-[1.32px] uppercase text-[var(--color-primary)]">
+            Related News
+          </p>
+          <ul class="flex flex-col gap-2">
+            {relatedNews.map((a) => (
+              <li>
+                <a
+                  href={`/news/${a.slug}`}
+                  class="body-l tracking-[1px] text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors"
+                >
+                  {a.title}
+                </a>
+              </li>
+            ))}
+            {(investment.externalNews ?? []).map((item) => (
+              <li>
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="body-l text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors inline-flex items-start gap-2 group"
+                >
+                  <span class="mt-[5px] shrink-0 opacity-50 group-hover:opacity-100 transition-opacity">↗</span>
+                  <span>{item.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+
+    {/* ── Website ── */}
+    {
+      investment.website && (
+        <p data-detail-website class="body-l tracking-[1px] text-[var(--color-text)]">
+          <span class="opacity-60">Website:</span>&nbsp;&nbsp;
+          <a
+            href={investment.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="underline hover:text-[var(--color-primary)] transition-colors"
+          >
+            {investment.website.replace(/^https?:\/\//, "")}
+          </a>
+        </p>
+      )
+    }
+
+    {/* ── Back to Investments CTA ── */}
+    <div data-detail-back class="mt-4">
+      <Button label="Back to Investments" href="/investments" variant="primary" />
+    </div>
+
+  </div>
+</section>
+
+<style>
+  [data-detail-logo],
+  [data-detail-copy],
+  [data-detail-meta],
+  [data-detail-acquisitions],
+  [data-detail-news],
+  [data-detail-website] {
+    opacity: 0;
+    transform: translateY(16px);
+    animation-fill-mode: forwards;
+    animation-name: detail-fade-up;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-detail-logo]          { animation-duration: 0.8s; animation-delay: 0s; }
+  [data-detail-copy]          { animation-duration: 0.8s; animation-delay: 0.08s; }
+  [data-detail-meta]          { animation-duration: 0.8s; animation-delay: 0.16s; }
+  [data-detail-acquisitions]  { animation-duration: 0.8s; animation-delay: 0.24s; }
+  [data-detail-news]          { animation-duration: 0.8s; animation-delay: 0.32s; }
+  [data-detail-website]       { animation-duration: 0.8s; animation-delay: 0.40s; }
+
+  @keyframes detail-fade-up {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-detail-logo],
+    [data-detail-copy],
+    [data-detail-meta],
+    [data-detail-acquisitions],
+    [data-detail-news],
+    [data-detail-website] {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from "@lib/animations";
+
+  gsap.from("[data-detail-back]", {
+    opacity: 0,
+    y: 16,
+    duration: 0.8,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-detail-back]", start: "top 95%", once: true },
+  });
+</script>

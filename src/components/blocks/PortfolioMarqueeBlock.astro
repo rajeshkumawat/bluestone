@@ -1,0 +1,577 @@
+---
+import type { PortfolioMarqueeBlock } from "@content";
+import Button from "@components/ui/Button.astro";
+import { getInvestments, getParentInvestments, getArticles } from "@content";
+
+type Props = PortfolioMarqueeBlock;
+const { title, investmentSlugs, cta } = Astro.props;
+
+// Resolve slugs to full Investment records
+const all = await getInvestments();
+const items = investmentSlugs
+  .map((slug) => all.find((i) => i.slug === slug))
+  .filter(Boolean) as typeof all;
+
+// Duplicate the list so the marquee can loop seamlessly
+const looped = [...items, ...items];
+
+// Unique logo URLs for preload hints
+const preloadLogos = Array.from(new Set(items.map((i) => i.logo)));
+
+// Modal data — parent investments + article lookup for the popup
+const parents = await getParentInvestments();
+const articles = await getArticles();
+const articlesBySlug = Object.fromEntries(
+  articles.map((a) => [a.slug, { title: a.title, slug: a.slug }])
+);
+const investmentsBySlug = Object.fromEntries(parents.map((inv) => [inv.slug, inv]));
+const modalData = { investments: investmentsBySlug, articles: articlesBySlug };
+---
+
+<!--
+  Preload every marquee logo at first paint so the carousel never reveals
+  an unloaded image as cards slide into view. The browser de-duplicates
+  these with the actual <img> requests, so this just promotes priority.
+-->
+{preloadLogos.map((href) => (
+  <link rel="preload" as="image" href={href} fetchpriority="high" />
+))}
+
+<!--
+  overflow-x-clip lets the marquee hide its horizontal overflow while
+  still allowing vertical content (the hover-lift on cards, including
+  the top border) to remain fully visible.
+-->
+<section data-block="portfolio-marquee" class="section bg-[var(--color-bg)] overflow-x-clip">
+  <div class="container-max flex flex-col items-center gap-12">
+    <h2 data-portfolio-title class="h2 text-[var(--color-text)] self-start">{title}</h2>
+
+    <!--
+      Marquee (per Figma annotation: "slow scroll, pause on hover").
+      No mask-image fade — cards should appear fully formed as they
+      scroll into view, not faded in. py-3 gives cards vertical room
+      for the hover-lift so the top border isn't cropped.
+    -->
+    <div
+      data-marquee
+      class="relative w-full py-3 select-none"
+    >
+      <!--
+        Card spec per Figma frame 8243:3128:
+        – Default: bare logo on the page bg (no card chrome).
+        – Hover:   thin border, white bg, slight lift, "Learn More →" appears.
+        – Logos render at a uniform max-height so every brand sits at
+          the same optical weight regardless of the source aspect ratio.
+
+        cursor-grab + touch-action:pan-y on the track let the user drag
+        horizontally with mouse OR finger while vertical page scroll
+        passes through. The drag handler lives in the <script> below.
+      -->
+      <ul
+        data-marquee-track
+        class="flex gap-2 will-change-transform cursor-grab"
+        style="width: max-content; touch-action: pan-y;"
+      >
+        {
+          looped.map((inv, i) => (
+            <li
+              class="group shrink-0 h-[200px] w-[220px] sm:h-[260px] sm:w-[300px]"
+              data-marquee-item
+              aria-hidden={i >= items.length ? "true" : "false"}
+            >
+              <button
+                type="button"
+                data-inv-trigger
+                data-slug={inv.parentSlug ?? inv.slug}
+                aria-label={`View details for ${inv.name}`}
+                class="flex h-full w-full flex-col items-center justify-center rounded-[10px] border border-transparent bg-transparent px-4 py-5 sm:px-5 sm:py-6 gap-3 sm:gap-4 transition-[transform,box-shadow,border-color,background-color] duration-300 hover:border-[var(--color-primary-20)] hover:bg-white hover:-translate-y-1 hover:shadow-[0_20px_30px_-15px_rgba(32,56,100,0.18)] cursor-pointer focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              >
+                <div class="flex h-[120px] sm:h-[160px] w-full items-center justify-center">
+                  <img
+                    src={inv.logo}
+                    alt={inv.name}
+                    data-marquee-img
+                    draggable="false"
+                    class="max-h-[68px] max-w-[180px] sm:max-h-[80px] sm:max-w-[200px] w-auto h-auto object-contain grayscale opacity-60 transition-[filter,opacity,transform] duration-500 ease-out group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-[1.04] select-none pointer-events-none"
+                    style="-webkit-user-drag: none; user-drag: none;"
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                  />
+                </div>
+                <span
+                  data-learn-more
+                  class="group/learn body-l tracking-[1px] text-[var(--color-primary)] opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 inline-flex items-center gap-1.5"
+                >
+                  <span class="learn-more-label">Learn More</span>
+                  <span aria-hidden="true" class="relative inline-block h-[1em] w-[1.2em] overflow-hidden">
+                    <span class="absolute inset-0 flex items-center justify-center transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/learn:translate-x-[140%]">→</span>
+                    <span class="absolute inset-0 flex items-center justify-center -translate-x-[140%] transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/learn:translate-x-0">→</span>
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div data-portfolio-cta>
+      <Button {...cta} />
+    </div>
+  </div>
+</section>
+
+<!-- Investment detail modal (same popup as on the Investments page) -->
+<div
+  id="inv-modal"
+  data-inv-modal
+  class="fixed inset-0 z-[55] hidden items-center justify-center p-4 sm:p-8"
+  aria-hidden="true"
+  style="display:none;"
+>
+  <div
+    data-inv-backdrop
+    class="fixed inset-0 bg-[rgba(32,56,100,0.85)]"
+    style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
+  ></div>
+
+  <article
+    data-inv-card
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="inv-modal-name"
+    class="relative bg-white rounded-[10px] shadow-2xl w-full overflow-y-auto"
+    style="max-width: min(960px, calc(100vw - 32px)); max-height: calc(100vh - 64px); -webkit-overflow-scrolling: touch; overscroll-behavior: contain;"
+  >
+    <button
+      type="button"
+      data-inv-close
+      aria-label="Close"
+      class="absolute top-5 right-5 inline-flex h-8 w-8 items-center justify-center text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors z-10"
+    >
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+    </button>
+
+    <div class="p-8 sm:p-10">
+      <div class="flex flex-col sm:flex-row gap-6 sm:gap-8">
+        <div
+          class="flex items-center justify-center rounded-[10px] border border-[var(--color-primary-20)] bg-white shrink-0"
+          style="width: 200px; min-height: 120px; padding: 20px;"
+        >
+          <img data-inv-logo-img src="" alt="" class="h-auto w-auto object-contain" style="max-height: 80px; max-width: 160px;" />
+        </div>
+        <div class="flex-1 min-w-0 flex flex-col justify-center">
+          <h2 id="inv-modal-name" data-inv-name class="h3-accent text-[var(--color-text)]"></h2>
+          <p class="mt-3 body-l text-[var(--color-text)] opacity-60">
+            <span data-inv-date class="hidden"><span data-inv-date-val></span>&ensp;|&ensp;</span>Status:&ensp;<span data-inv-status-val></span>
+          </p>
+        </div>
+      </div>
+
+      <div data-inv-body class="mt-6 flex flex-col gap-4 body-l text-[var(--color-text)]"></div>
+
+      <div data-inv-acquisitions class="mt-8 hidden">
+        <p class="text-[11px] font-semibold tracking-[1.32px] uppercase text-[var(--color-primary)] mb-4">Platform Acquisitions</p>
+        <div data-inv-acq-logos class="flex flex-wrap items-center gap-4"></div>
+      </div>
+
+      <div data-inv-news class="mt-8 hidden">
+        <p class="text-[11px] font-semibold tracking-[1.32px] uppercase text-[var(--color-primary)] mb-4">Related News</p>
+        <ul data-inv-news-list class="flex flex-col gap-2"></ul>
+      </div>
+
+      <p data-inv-website class="mt-6 body-l tracking-[1px] text-[var(--color-text)] hidden">
+        <span class="opacity-60">Website:</span>&nbsp;&nbsp;<a
+          data-inv-website-link
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="underline hover:text-[var(--color-primary)] transition-colors"
+        ></a>
+      </p>
+    </div>
+  </article>
+</div>
+
+<script id="inv-modal-data-home" type="application/json" set:html={JSON.stringify(modalData)} />
+
+<style is:global>
+  /*
+    Learn More underline — same left-to-right draw as the investments
+    page. Rendered as a background-image gradient on the label so it
+    can't be clipped and doesn't depend on positioning. Scoped via
+    is:global so this block can also work standalone on the home page.
+  */
+  [data-block="portfolio-marquee"] .learn-more-label {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    background-size: 0% 1px;
+    padding-bottom: 4px;
+    transition: background-size 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-block="portfolio-marquee"] .learn-more-label:hover {
+    background-size: 100% 1px;
+  }
+</style>
+
+<style>
+  /*
+    Mobile only: apply the "hover" styles by default so the cards look
+    finished without a hover input (phones can't hover). The marquee
+    itself keeps auto-scrolling on mobile — the GSAP animation works
+    fine across viewports.
+  */
+  @media (max-width: 767px) {
+    [data-marquee-item] button {
+      border-color: var(--color-primary-20) !important;
+      background: white !important;
+      transform: translateY(-4px) !important;
+      box-shadow: 0 20px 30px -15px rgba(32, 56, 100, 0.18) !important;
+    }
+    [data-marquee-item] img {
+      filter: none !important;
+      opacity: 1 !important;
+      transform: scale(1.04) !important;
+    }
+    [data-learn-more] {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger } from "@lib/animations";
+
+  // Title reveal
+  gsap.from("[data-portfolio-title]", {
+    opacity: 0,
+    y: 24,
+    duration: 1,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-portfolio-title]", start: "top 85%", once: true },
+  });
+
+  // ── Marquee: continuous loop, pause on hover ──
+  const track = document.querySelector<HTMLElement>("[data-marquee-track]");
+  const wrap = document.querySelector<HTMLElement>("[data-marquee]");
+
+  if (track && wrap) {
+    // The track is duplicated — animate by half its width for seamless loop
+    const half = () => track.scrollWidth / 2;
+
+    // Slow, relaxed scroll. Mobile slightly slower because the smaller
+    // cards mean more logos pass per second at the same px/s.
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    const duration = isMobile ? 95 : 65;
+
+    let tween: gsap.core.Tween | null = null;
+    const start = () => {
+      tween?.kill();
+      tween = gsap.to(track, {
+        x: -half(),
+        duration,
+        ease: "none",
+        repeat: -1,
+        modifiers: { x: gsap.utils.unitize((x: number) => parseFloat(x) % -half()) },
+      });
+    };
+
+    // Wait until every logo is fully decoded before starting the tween.
+    // Otherwise the marquee can scroll a card into view before its <img>
+    // has painted, producing the "pop-in" effect. Hidden track until ready
+    // so the layout doesn't shift either.
+    const imgs = Array.from(
+      track.querySelectorAll<HTMLImageElement>("[data-marquee-img]"),
+    );
+    track.style.opacity = "0";
+    track.style.transition = "opacity 400ms ease-out";
+
+    const ready = imgs.map((img) => {
+      // decode() resolves once the image has been fully decoded
+      // (or already is). complete-but-not-decoded edge cases are handled
+      // by the load-fallback. Errored images shouldn't block forever.
+      if (img.complete && img.naturalWidth > 0) {
+        return img.decode().catch(() => undefined);
+      }
+      return new Promise<void>((resolve) => {
+        img.addEventListener("load", () => img.decode().then(() => resolve(), () => resolve()), { once: true });
+        img.addEventListener("error", () => resolve(), { once: true });
+      });
+    });
+
+    Promise.all(ready).then(() => {
+      track.style.opacity = "1";
+      start();
+    });
+
+    // ── Drag / swipe support ─────────────────────────────────
+    // Pointer events cover both mouse and touch. While dragging we pause
+    // the GSAP tween and set X directly; on release the tween resumes
+    // from the current X for a seamless hand-off back to auto-scroll.
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartTrackX = 0;
+    let dragDist = 0;
+
+    const wrapX = (x: number) => {
+      // Keep x inside (-half, 0] so dragging far in either direction
+      // loops cleanly through the duplicated cards instead of pulling
+      // the track off-screen.
+      const h = half();
+      if (h <= 0) return x;
+      let v = x % h;
+      if (v > 0) v -= h;
+      return v;
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      // Left-button only for mouse; touch / pen pass through.
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartTrackX = (gsap.getProperty(track, "x") as number) || 0;
+      dragDist = 0;
+      tween?.pause();
+      try { track.setPointerCapture(e.pointerId); } catch {}
+      track.style.cursor = "grabbing";
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      dragDist = Math.max(dragDist, Math.abs(dx));
+      gsap.set(track, { x: wrapX(dragStartTrackX + dx) });
+    };
+
+    const endDrag = (e?: PointerEvent) => {
+      if (!isDragging) return;
+      isDragging = false;
+      track.style.cursor = "grab";
+      if (e) { try { track.releasePointerCapture(e.pointerId); } catch {} }
+      // Don't auto-resume if the cursor is still hovering the marquee —
+      // the hover-pause behaviour should keep control.
+      if (!wrap.matches(":hover")) start();
+    };
+
+    track.addEventListener("pointerdown", onPointerDown);
+    track.addEventListener("pointermove", onPointerMove);
+    track.addEventListener("pointerup", (e) => endDrag(e));
+    track.addEventListener("pointercancel", (e) => endDrag(e));
+    track.addEventListener("lostpointercapture", () => endDrag());
+    // Belt-and-suspenders: block native drag-image behaviour on any
+    // descendant element (img, links, etc.) so dragging the carousel
+    // doesn't trigger the browser's image/link ghost drag.
+    track.addEventListener("dragstart", (e) => e.preventDefault());
+
+    // Click handler: suppress modal open after a drag; otherwise open the
+    // investment detail modal. setPointerCapture redirects click to the track
+    // on some browsers so we use elementFromPoint to find the real target.
+    track.addEventListener(
+      "click",
+      (e) => {
+        const wasDrag = dragDist > 6;
+        dragDist = 0;
+        e.preventDefault();
+        e.stopPropagation(); // prevent the button's own listener from double-firing
+        if (wasDrag) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const btn = el?.closest<HTMLButtonElement>("[data-marquee-item] [data-inv-trigger]");
+        if (btn) {
+          const slug = btn.dataset.slug;
+          if (slug) document.dispatchEvent(
+            new CustomEvent("inv:open", { detail: { slug, trigger: btn } })
+          );
+        }
+      },
+      true,
+    );
+
+    // ── Hover pause (per Figma annotation) ───────────────────
+    // Skip the hover handlers when a drag is in progress so the tween
+    // doesn't get resumed mid-drag.
+    wrap.addEventListener("mouseenter", () => { if (!isDragging) tween?.pause(); });
+    wrap.addEventListener("mouseleave", () => { if (!isDragging) tween?.resume(); });
+    wrap.addEventListener("focusin", () => { if (!isDragging) tween?.pause(); });
+    wrap.addEventListener("focusout", () => { if (!isDragging) tween?.resume(); });
+
+    // Recompute on resize (logos may reflow)
+    let resizeRaf = 0;
+    window.addEventListener("resize", () => {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(start);
+    });
+  }
+
+  // CTA reveal
+  gsap.from("[data-portfolio-cta]", {
+    opacity: 0,
+    y: 16,
+    duration: 0.8,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-portfolio-cta]", start: "top 95%", once: true },
+  });
+</script>
+
+<script>
+  import { gsap } from "@lib/animations";
+  import type { Investment } from "@content";
+
+  // ── Data ──
+  const dataScript = document.getElementById("inv-modal-data-home");
+  const parsed = dataScript ? JSON.parse(dataScript.textContent || "{}") : {};
+  const investments: Record<string, Investment> = parsed.investments ?? {};
+  const articles: Record<string, { title: string; slug: string }> = parsed.articles ?? {};
+
+  // ── Modal DOM refs ──
+  const modal        = document.querySelector<HTMLElement>("[data-inv-modal]");
+  const card         = document.querySelector<HTMLElement>("[data-inv-card]");
+  const backdrop     = document.querySelector<HTMLElement>("[data-inv-backdrop]");
+  const closeBtn     = document.querySelector<HTMLButtonElement>("[data-inv-close]");
+  const elLogoImg    = document.querySelector<HTMLImageElement>("[data-inv-logo-img]");
+  const elName       = document.querySelector<HTMLElement>("[data-inv-name]");
+  const elDate       = document.querySelector<HTMLElement>("[data-inv-date]");
+  const elDateVal    = document.querySelector<HTMLElement>("[data-inv-date-val]");
+  const elStatusVal  = document.querySelector<HTMLElement>("[data-inv-status-val]");
+  const elBody       = document.querySelector<HTMLElement>("[data-inv-body]");
+  const elAcq        = document.querySelector<HTMLElement>("[data-inv-acquisitions]");
+  const elAcqLogos   = document.querySelector<HTMLElement>("[data-inv-acq-logos]");
+  const elNews       = document.querySelector<HTMLElement>("[data-inv-news]");
+  const elNewsList   = document.querySelector<HTMLElement>("[data-inv-news-list]");
+  const elWebsite    = document.querySelector<HTMLElement>("[data-inv-website]");
+  const elWebsiteLink = document.querySelector<HTMLAnchorElement>("[data-inv-website-link]");
+  const mobileToggle = document.querySelector<HTMLElement>("[data-mobile-toggle]");
+
+  let lastFocused: HTMLElement | null = null;
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+            .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  }
+
+  const open = (slug: string, trigger: HTMLElement) => {
+    const inv = investments[slug];
+    if (!inv || !modal || !elName || !elBody) return;
+
+    lastFocused = trigger;
+    if (mobileToggle) mobileToggle.style.display = "none";
+
+    if (elLogoImg) { elLogoImg.src = inv.logo; elLogoImg.alt = inv.name; }
+    elName.textContent = inv.name;
+
+    if (elDate && elDateVal) {
+      if (inv.platformInvestmentDate) {
+        elDateVal.textContent = `Investment Date: ${inv.platformInvestmentDate}`;
+        elDate.classList.remove("hidden");
+      } else {
+        elDate.classList.add("hidden");
+      }
+    }
+    if (elStatusVal) elStatusVal.textContent = inv.status === "active" ? "Active" : "Realized";
+
+    elBody.innerHTML = (inv.description ?? [])
+      .map((p) => `<p class="body-l text-[var(--color-text)]">${escapeHtml(p)}</p>`)
+      .join("");
+
+    if (elAcq && elAcqLogos) {
+      const acqs = inv.acquisitions ?? [];
+      if (acqs.length > 0) {
+        elAcqLogos.innerHTML = acqs.map((a) =>
+          `<div class="flex items-center justify-center rounded-[10px] bg-white border border-[rgba(32,56,100,0.15)] p-4" style="height:80px;width:200px;" title="${escapeHtml(a.name)}">` +
+          `<img src="${escapeHtml(a.logo)}" alt="${escapeHtml(a.name)}" class="object-contain" style="max-height:44px;max-width:144px;" loading="lazy" /></div>`
+        ).join("");
+        elAcq.classList.remove("hidden");
+      } else {
+        elAcqLogos.innerHTML = "";
+        elAcq.classList.add("hidden");
+      }
+    }
+
+    if (elNews && elNewsList) {
+      const internalNews = (inv.relatedNews ?? []).map((s) => articles[s]).filter(Boolean);
+      const externalNews = inv.externalNews ?? [];
+      if (internalNews.length > 0 || externalNews.length > 0) {
+        elNewsList.innerHTML =
+          internalNews.map((a) =>
+            `<li><a href="/news/${escapeHtml(a.slug)}" class="body-l tracking-[1px] text-[var(--color-text)] underline hover:text-[var(--color-primary)] transition-colors">${escapeHtml(a.title)}</a></li>`
+          ).join("") +
+          externalNews.map((item) =>
+            `<li><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="body-l text-[var(--color-text)] underline hover:text-[var(--color-primary)] transition-colors inline-flex items-start gap-2 group">` +
+            `<span class="mt-[5px] shrink-0 opacity-50 group-hover:opacity-100 transition-opacity">↗</span>` +
+            `<span>${escapeHtml(item.title)}</span></a></li>`
+          ).join("");
+        elNews.classList.remove("hidden");
+      } else {
+        elNewsList.innerHTML = "";
+        elNews.classList.add("hidden");
+      }
+    }
+
+    if (elWebsite && elWebsiteLink) {
+      if (inv.website) {
+        elWebsiteLink.href = inv.website;
+        elWebsiteLink.textContent = inv.website.replace(/^https?:\/\//, "");
+        elWebsite.classList.remove("hidden");
+      } else {
+        elWebsite.classList.add("hidden");
+      }
+    }
+
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+    if (card) card.scrollTop = 0;
+
+    const scrollY = window.scrollY;
+    document.documentElement.dataset.invScrollY = String(scrollY);
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    gsap.fromTo(backdrop, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" });
+    gsap.fromTo(card, { opacity: 0, y: 24, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "expo.out" });
+    requestAnimationFrame(() => closeBtn?.focus());
+  };
+
+  const close = () => {
+    if (!modal) return;
+    gsap.to(card, { opacity: 0, y: 16, scale: 0.98, duration: 0.3, ease: "power2.in" });
+    gsap.to(backdrop, {
+      opacity: 0, duration: 0.3, ease: "power2.in",
+      onComplete: () => {
+        modal.style.display = "none";
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        const savedY = parseInt(document.documentElement.dataset.invScrollY ?? "0", 10);
+        window.scrollTo(0, savedY);
+        if (mobileToggle) mobileToggle.style.display = "";
+        lastFocused?.focus();
+      },
+    });
+  };
+
+  // Listen for the custom event dispatched by the marquee drag/click handler
+  document.addEventListener("inv:open", ((e: Event) => {
+    const ce = e as CustomEvent<{ slug: string; trigger: HTMLElement }>;
+    open(ce.detail.slug, ce.detail.trigger);
+  }) as EventListener);
+
+  closeBtn?.addEventListener("click", close);
+  backdrop?.addEventListener("click", close);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal?.getAttribute("aria-hidden") === "false") close();
+  });
+
+  // Wheel handler — same fix as InvestmentsListBlock: position:fixed on body
+  // blocks Chrome from routing wheel events to the modal card, so we intercept.
+  card?.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const delta = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * (card.clientHeight || 600) : e.deltaY;
+    card.scrollTop += delta;
+  }, { passive: false });
+</script>

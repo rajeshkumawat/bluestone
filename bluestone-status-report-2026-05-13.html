@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Bluestone Investment Partners — Website Update — May 13, 2026</title>
+  <style>
+    :root {
+      --navy: #203864;
+      --navy-50: rgba(32, 56, 100, 0.5);
+      --navy-12: rgba(32, 56, 100, 0.12);
+      --ink: #1a1a1a;
+      --muted: #4a5468;
+      --rule: #d9dee8;
+      --bg: #ffffff;
+      --tint: #f6f8fc;
+      --success: #1f6b3d;
+      --waiting: #8b6f00;
+      --scheduled: #2a4a7a;
+    }
+    @page { size: Letter; margin: 22mm 18mm 22mm 18mm; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11pt;
+      line-height: 1.6;
+    }
+    body { max-width: 760px; margin: 0 auto; padding: 32px 36px 56px; }
+
+    header.doc-header {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      border-bottom: 1.5px solid var(--navy);
+      padding-bottom: 16px; margin-bottom: 28px;
+    }
+    .brand { font-family: Georgia, "Times New Roman", serif; color: var(--navy); }
+    .brand .name {
+      font-size: 22pt; font-weight: 600; letter-spacing: 0.5px; line-height: 1.05;
+    }
+    .brand .sub {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 8pt; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--navy-50); margin-top: 4px;
+    }
+    .meta {
+      text-align: right;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 8.5pt; color: var(--muted); letter-spacing: 0.4px;
+    }
+    .meta strong { color: var(--navy); font-weight: 600; }
+
+    h1.doc-title {
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--navy);
+      font-size: 26pt; font-weight: 500; line-height: 1.15;
+      margin: 0 0 6px 0;
+    }
+    .doc-sub {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      color: var(--muted);
+      font-size: 9.5pt; letter-spacing: 1.5px; text-transform: uppercase;
+      margin: 0 0 32px 0;
+    }
+
+    h2 {
+      color: var(--navy);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15pt; font-weight: 600;
+      margin: 28px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--rule);
+    }
+    h3 {
+      color: var(--navy);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 12pt; font-weight: 600;
+      margin: 20px 0 8px;
+    }
+
+    p { margin: 0 0 10px; }
+    ul { margin: 6px 0 14px; padding-left: 22px; }
+    li { margin-bottom: 6px; }
+
+    strong { color: var(--ink); }
+
+    .summary {
+      background: var(--tint);
+      border-left: 3px solid var(--navy);
+      padding: 14px 18px;
+      margin: 14px 0 24px;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 10pt;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .summary strong { color: var(--navy); }
+
+    .stat-row {
+      display: flex;
+      gap: 18px;
+      margin: 18px 0 28px;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+    }
+    .stat {
+      flex: 1;
+      background: var(--tint);
+      border-top: 3px solid var(--navy);
+      padding: 14px 16px 16px;
+    }
+    .stat .num {
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--navy);
+      font-size: 24pt; font-weight: 600; line-height: 1;
+      display: block;
+    }
+    .stat .label {
+      font-size: 8.5pt; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 6px;
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 9.5pt;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      vertical-align: top;
+      border-bottom: 1px solid var(--rule);
+    }
+    th {
+      background: var(--tint);
+      color: var(--navy);
+      font-weight: 600; letter-spacing: 0.3px;
+      text-transform: uppercase;
+      font-size: 8.5pt;
+    }
+
+    footer.doc-footer {
+      margin-top: 40px;
+      padding-top: 14px;
+      border-top: 1px solid var(--rule);
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 8.5pt;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+      display: flex; justify-content: space-between;
+    }
+    footer .url { color: var(--navy); }
+
+    @media print {
+      body { padding: 0; max-width: none; }
+      h2 { page-break-after: avoid; }
+      h3 { page-break-after: avoid; }
+      tr, li { page-break-inside: avoid; }
+      .summary, .stat-row { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="doc-header">
+    <div class="brand">
+      <div class="name">BLUESTONE</div>
+      <div class="sub">Investment Partners</div>
+    </div>
+    <div class="meta">
+      <div><strong>Website Update</strong></div>
+      <div>May 13, 2026</div>
+      <div>Prepared by Design in DC</div>
+    </div>
+  </header>
+
+  <h1 class="doc-title">Website Update</h1>
+  <div class="doc-sub">Progress report — Spring 2026</div>
+
+  <div class="summary">
+    This update covers the round of revisions completed since our last review. The staging site reflects everything listed under "What we updated," and is ready for you to walk through. The "Still to come" section captures what we're waiting on from your team and the larger pieces we have scheduled.
+  </div>
+
+  <div class="stat-row">
+    <div class="stat">
+      <span class="num">25</span>
+      <span class="label">Updates shipped</span>
+    </div>
+    <div class="stat">
+      <span class="num">5</span>
+      <span class="label">Items awaiting your content</span>
+    </div>
+    <div class="stat">
+      <span class="num">1</span>
+      <span class="label">Larger feature scheduled</span>
+    </div>
+  </div>
+
+  <h2>What we updated</h2>
+
+  <h3>Home page</h3>
+  <ul>
+    <li>The main headline now reads more like a sentence — "Technology Investing" sits on its own line and "Investing" is no longer in italics. The page feels more institutional at first glance.</li>
+    <li>The dark navy wash behind the hero video is a touch deeper, which makes the white headline pop more clearly.</li>
+    <li>The portfolio logo carousel is in your specified order: Axim Geospatial → CBEYONData → CTI → Precise Systems → Qualis → InTrack Radar Technologies → Tektonux → Valiant Solutions → Abile Group.</li>
+    <li>The carousel logos now appear cleanly as they slide into view (before, they would briefly "pop in" as they entered the screen — that's been fixed by loading them all up front).</li>
+    <li>The carousel is now <strong>draggable</strong> — visitors can click-and-drag with a mouse or swipe on a phone to scroll through the logos manually. It still auto-scrolls when left alone.</li>
+    <li>Hovering directly over "Learn More" on a carousel card now shows the same animated underline + arrow movement that appears on the Investments page — feels consistent across the site.</li>
+    <li>The logo sizing in the carousel is balanced — bigger logos no longer dwarf smaller ones.</li>
+  </ul>
+
+  <h3>About page</h3>
+  <ul>
+    <li>The hero headline now reads cleanly across two lines: "Creating Value / Through Partnership." No italics.</li>
+    <li>The dark navy wash on the About hero is lighter than the Home page, so the photograph stays visible while the headline remains readable.</li>
+    <li>"Our Firm" section has a new split layout — copy on the left, a navy parallelogram graphic on the right — giving the section more visual structure.</li>
+    <li>"Empowering Management Teams" has been renamed to "Empowering Leadership Teams," and the supporting paragraph is now in the larger body style for easier reading.</li>
+    <li>The Approach cards no longer show a clickable cursor on hover (they weren't meant to be clickable).</li>
+  </ul>
+
+  <h3>Team page</h3>
+  <ul>
+    <li>The subtitle under the page header has been removed for a cleaner introduction.</li>
+    <li>The bio pop-up now has an <strong>email icon</strong> alongside the LinkedIn icon. Once you provide email addresses per team member, tapping the icon will open the visitor's email app pre-addressed to that person.</li>
+  </ul>
+
+  <h3>Investments page</h3>
+  <ul>
+    <li>All 27 companies are now in your preferred order: PAI in position 1, followed by Valiant Solutions, Abile Group, Qualis, Tektonux, and the rest of the sequence you sent through.</li>
+    <li>The new <strong>CTI logo</strong> has been swapped in across the site.</li>
+    <li>The new <strong>PAI logo</strong> has been added and tuned so it stays clearly visible in the default (muted) state — the original light-blue gradient was getting washed out, which we've corrected without changing the brand's look.</li>
+    <li>Logo size in each card has been reduced about 15% so the marks breathe inside the card frame rather than crowding it.</li>
+    <li>Card heights have been normalized so the grid looks even across mobile and desktop.</li>
+    <li>"Investment Criteria" rows: the icons now line up vertically with the text next to them, and bullet markers have been removed for a more polished, editorial look.</li>
+    <li>The filter pills are centered on smaller screens and left-aligned on desktop.</li>
+  </ul>
+
+  <h3>News (article detail page)</h3>
+  <ul>
+    <li>The article detail page has been simplified: just the publication date, the headline, a short summary, and a clear <strong>"View Article"</strong> button that opens the full article on the original source in a new browser tab. The category tag and "min read" estimate have been removed.</li>
+  </ul>
+
+  <h3>Site-wide polish</h3>
+  <ul>
+    <li>The mobile menu button (hamburger) now stays perfectly aligned next to the BLUESTONE logo in every state — at first load over the hero, after scrolling (where the bar shrinks), and when the navy menu drawer is open. Previously it drifted between states.</li>
+    <li>Entrance animations across the whole site have been simplified — text now fades up as a single paragraph rather than revealing word-by-word. The new motion feels more institutional and is easier to read.</li>
+    <li>The footer phone number is now a tap-to-call link, and the email address opens the visitor's mail app — handy for mobile users.</li>
+    <li>The footer LinkedIn icon links to the live Bluestone Investment Partners LinkedIn company page.</li>
+    <li>News articles can now optionally link out to an external source (used by the "View Article" button mentioned above).</li>
+  </ul>
+
+  <h2>Still to come — awaiting your content</h2>
+
+  <div class="summary">
+    These are <strong>ready to ship as soon as you send the corresponding material.</strong> No design or engineering work is blocking them.
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Item</th><th>What we need</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Team page</strong> — real bios and headshots</td>
+        <td>4 photos and up to 16 bio paragraphs. We can stagger these in batches if it's easier.</td>
+      </tr>
+      <tr>
+        <td><strong>Team page</strong> — individual email addresses</td>
+        <td>One per team member. These power the new email icon in the bio pop-up.</td>
+      </tr>
+      <tr>
+        <td><strong>News section</strong> — real articles</td>
+        <td>For each item: title, publication date, short summary, and the external URL where the full article lives.</td>
+      </tr>
+      <tr>
+        <td><strong>Investment detail pages</strong> — per-company content</td>
+        <td>For each company: a short description, sector, platform investment date, any related news to cross-link, and — where applicable — the parent / add-on relationship (i.e. which platform parent the company sits under, or which add-on acquisitions it has made).</td>
+      </tr>
+      <tr>
+        <td><strong>Update the Bluestone logo</strong></td>
+        <td>Client to provide the font.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Still to come — scheduled work</h2>
+
+  <p>
+    <strong>Parent / add-on investment hierarchy.</strong> This is a meaningful expansion of how the portfolio is represented. Right now every company is a flat entry. The new model will recognize that 12 of your investments are platform parents (PAI, Valiant Solutions, Qualis, Precise Systems, CBEYONData, CTI, Axim Geospatial, Intrepid, Quadel, Omniplex, GAP Solutions, CIS Secure Computing) and that roughly 15 others are add-on acquisitions sitting underneath those parents. Once it's in place:
+  </p>
+  <ul>
+    <li>The parent's detail page will list the add-on acquisitions made under that platform — making the buy-and-build strategy visible at a glance.</li>
+    <li>Visitors can move cleanly between a parent and its add-ons.</li>
+    <li>The portfolio reads accurately as a layered platform strategy rather than as a flat list of 27 companies.</li>
+  </ul>
+  <p>We've scheduled this as a dedicated work block — it isn't blocked on any content from your side.</p>
+
+  <h2>Next steps</h2>
+  <ol>
+    <li>Walk through the staging site against the "What we updated" section above. We've staged everything for your review.</li>
+    <li>Send across the team, news, and investment content from "Still to come" in whatever order is easiest — we'll populate as it arrives.</li>
+    <li>We begin the parent / add-on hierarchy work in parallel, so the structure is ready when your content lands.</li>
+  </ol>
+
+  <footer class="doc-footer">
+    <div>Prepared for client review</div>
+    <div>Staging site: <span class="url">bluestone.designinx.com</span></div>
+  </footer>
+
+</body>
+</html>

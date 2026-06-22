@@ -1,0 +1,16 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import BlockRenderer from "@components/blocks/BlockRenderer.astro";
+import { getPage } from "@content";
+
+const contact = await getPage("contact");
+if (!contact) throw new Error("contact page content missing");
+---
+
+<!--
+  No heroHeader prop — Contact uses the tertiary-bg block as its
+  full-page section, with the global header naturally on white above.
+-->
+<BaseLayout title="Contact Bluestone Investment Partners" description="Contact Bluestone Investment Partners in McLean, VA to connect with our team about defense and government technology investment opportunities.">
+  <BlockRenderer blocks={contact.blocks} />
+</BaseLayout>

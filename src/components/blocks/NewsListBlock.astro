@@ -1,0 +1,196 @@
+---
+/**
+ * News List — 3-column grid of all articles with pagination UI.
+ *
+ * Per Figma frame 8243:3945:
+ *   – Each card: tertiary bg, rounded, h4 title, excerpt, "Read More →"
+ *   – Pagination: ‹ 1 2 3 4 5 ›  (active page = navy filled circle)
+ *   – Pagination only renders if there are >perPage articles
+ */
+import type { NewsListBlock } from "@content";
+import { getArticles } from "@content";
+
+type Props = NewsListBlock;
+const { perPage = 9 } = Astro.props;
+
+// All articles, newest first
+const articles = await getArticles();
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+const totalPages = Math.max(1, Math.ceil(articles.length / perPage));
+const showPagination = totalPages > 1;
+---
+
+<section data-block="news-list" class="section bg-[var(--color-bg)]">
+  <div class="container-max flex flex-col items-center gap-12">
+    <ul data-news-list-grid class="grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        articles.map((a, i) => (
+          <li
+            data-news-list-card
+            data-news-page={Math.floor(i / perPage) + 1}
+            class:list={[
+              "group flex flex-col bg-[var(--color-tertiary)] rounded-[10px] p-7 transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_20px_30px_-15px_rgba(32,56,100,0.18)]",
+              Math.floor(i / perPage) + 1 !== 1 && "page-hidden",
+            ]}
+          >
+            <a href={`/news/${a.slug}`} class="flex flex-col gap-4 h-full">
+              <p class="body-s text-[var(--color-text)] opacity-60">{formatDate(a.publishedAt)}</p>
+              <h3 class="h4 text-[var(--color-text)] line-clamp-3">
+                {a.title}
+              </h3>
+              <div class="flex-1 overflow-hidden">
+                <p class="body-s sm:text-[18px] sm:leading-[24px] text-[var(--color-text)] line-clamp-4">{a.excerpt}</p>
+              </div>
+              <div class="pt-5">
+                <span class="body-l tracking-[1px] text-[var(--color-primary)] inline-flex items-center gap-1">
+                  <span class="relative">
+                    Read More
+                    <span class="absolute left-0 -bottom-0.5 h-px w-full origin-left scale-x-0 bg-[var(--color-primary)] transition-transform duration-300 group-hover:scale-x-100" />
+                  </span>
+                  <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                </span>
+              </div>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    {
+      showPagination && (
+        <nav data-news-pagination aria-label="Pagination" class="flex items-center gap-3">
+          <button
+            type="button"
+            data-news-prev
+            aria-label="Previous page"
+            class="page-arrow inline-flex h-[42px] w-[42px] items-center justify-center rounded-md text-[var(--color-text)] hover:bg-[var(--color-tertiary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            disabled
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+            <button
+              type="button"
+              data-page={n}
+              aria-label={`Page ${n}`}
+              aria-current={n === 1 ? "page" : undefined}
+              class:list={[
+                "page-btn inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border body-l tracking-[1px] transition-colors",
+                n === 1
+                  ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-[var(--color-bg)]"
+                  : "border-[var(--color-text)] text-[var(--color-text)] hover:bg-[var(--color-tertiary)]",
+              ]}
+            >
+              {n}
+            </button>
+          ))}
+          <button
+            type="button"
+            data-news-next
+            aria-label="Next page"
+            class="page-arrow inline-flex h-[42px] w-[42px] items-center justify-center rounded-md text-[var(--color-text)] hover:bg-[var(--color-tertiary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </nav>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  [data-news-list-card] {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  [data-news-list-card].page-hidden {
+    display: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-news-list-card] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from "@lib/animations";
+
+  const grid = document.querySelector<HTMLElement>("[data-news-list-grid]");
+  const allCards = Array.from(document.querySelectorAll<HTMLElement>("[data-news-list-card]"));
+  const pageButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-page]"));
+  const prevBtn = document.querySelector<HTMLButtonElement>("[data-news-prev]");
+  const nextBtn = document.querySelector<HTMLButtonElement>("[data-news-next]");
+  const totalPages = pageButtons.length;
+  let currentPage = 1;
+
+  function getPageCards(page: number) {
+    return allCards.filter((c) => Number(c.dataset.newsPage) === page);
+  }
+
+  function goToPage(page: number) {
+    if (page < 1 || page > totalPages) return;
+
+    // Hide all cards
+    allCards.forEach((c) => c.classList.add("page-hidden"));
+
+    // Show and animate new page
+    const incoming = getPageCards(page);
+    incoming.forEach((c) => {
+      c.classList.remove("page-hidden");
+      gsap.fromTo(c, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out", delay: 0 });
+    });
+
+    // Stagger the cards
+    incoming.forEach((c, i) => {
+      gsap.fromTo(c, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out", delay: i * 0.06 });
+    });
+
+    // Update pagination buttons
+    pageButtons.forEach((btn) => {
+      const active = Number(btn.dataset.page) === page;
+      btn.classList.toggle("bg-[var(--color-primary)]", active);
+      btn.classList.toggle("border-[var(--color-primary)]", active);
+      btn.classList.toggle("text-[var(--color-bg)]", active);
+      btn.classList.toggle("border-[var(--color-text)]", !active);
+      btn.classList.toggle("text-[var(--color-text)]", !active);
+      btn.setAttribute("aria-current", active ? "page" : "false");
+    });
+
+    if (prevBtn) prevBtn.disabled = page === 1;
+    if (nextBtn) nextBtn.disabled = page === totalPages;
+
+    currentPage = page;
+
+    // Scroll to top of grid
+    grid?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Initialise: hide all pages except page 1 and animate page 1 in
+  allCards.forEach((c) => {
+    if (Number(c.dataset.newsPage) !== 1) {
+      c.classList.add("page-hidden");
+    }
+  });
+  getPageCards(1).forEach((c, i) => {
+    gsap.fromTo(c, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out", delay: i * 0.06 });
+  });
+  if (nextBtn) nextBtn.disabled = totalPages <= 1;
+
+  // Wire page number buttons
+  pageButtons.forEach((btn) => {
+    btn.addEventListener("click", () => goToPage(Number(btn.dataset.page)));
+  });
+  prevBtn?.addEventListener("click", () => goToPage(currentPage - 1));
+  nextBtn?.addEventListener("click", () => goToPage(currentPage + 1));
+</script>

@@ -1,0 +1,89 @@
+---
+/**
+ * Page Header — title + divider line + optional subtitle on light bg.
+ * Used as the inner-page hero (Team, Investments, News, Contact).
+ *
+ * Different from `HeroBlock` which is full-screen with media bg.
+ * This is a typographic page header that lets the global header sit
+ * naturally on top (no transparent → white scroll flip needed).
+ */
+import type { PageHeaderBlock } from "@content";
+
+type Props = PageHeaderBlock;
+const { title, subtitle, tone = "bg" } = Astro.props;
+
+const isPrimary = tone === "primary";
+const bgClass =
+  tone === "primary"
+    ? "bg-[var(--color-primary)]"
+    : tone === "tertiary"
+      ? "bg-[var(--color-tertiary)]"
+      : "bg-[var(--color-bg)]";
+const fgClass = isPrimary ? "text-[var(--color-bg)]" : "text-[var(--color-text)]";
+const dividerColor = isPrimary ? "bg-[var(--color-bg)]" : "bg-[var(--color-text)]";
+---
+
+<section
+  data-block="page-header"
+  data-tone={tone}
+  class:list={["section pt-12 lg:pt-16", bgClass]}
+>
+  <div class="container-max max-w-[640px]">
+    <h1 data-page-title class:list={["h1", fgClass]}>{title}</h1>
+    <span data-page-divider class:list={["mt-6 block h-[2px] w-[190px] origin-left", dividerColor]}></span>
+    {
+      subtitle && (
+        <p data-page-subtitle class:list={["mt-6 body-l", fgClass]}>
+          {subtitle}
+        </p>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  /*
+    Entrance animations — CSS-driven so the hidden state is applied at
+    first paint (no GSAP flash-of-rendered-content).
+  */
+  [data-page-title],
+  [data-page-divider],
+  [data-page-subtitle] {
+    opacity: 0;
+    animation-fill-mode: forwards;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-page-title] {
+    transform: translateY(24px);
+    animation-name: page-fade-up;
+    animation-duration: 1s;
+  }
+  [data-page-divider] {
+    transform: scaleX(0);
+    transform-origin: left center;
+    animation-name: page-divider-draw;
+    animation-duration: 1.1s;
+    animation-delay: 0.4s;
+  }
+  [data-page-subtitle] {
+    transform: translateY(16px);
+    animation-name: page-fade-up;
+    animation-duration: 0.9s;
+    animation-delay: 0.5s;
+  }
+  @keyframes page-fade-up {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes page-divider-draw {
+    to { opacity: 1; transform: scaleX(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-page-title],
+    [data-page-divider],
+    [data-page-subtitle] {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+  }
+</style>

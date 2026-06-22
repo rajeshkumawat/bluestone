@@ -1,0 +1,116 @@
+---
+import type { IntroStatsBlock } from "@content";
+import Button from "@components/ui/Button.astro";
+
+type Props = IntroStatsBlock;
+const { intro, cta, stats } = Astro.props;
+---
+
+<section data-block="intro-stats" class="section bg-[var(--color-bg)]">
+  <!--
+    Layout matches Figma frame 8243:3114:
+    – Left column is `flex-1` (grows to fill); intro headline wraps to ~3 lines
+    – Right column (stats rail) is auto-width
+    – Gap is the Figma --content-gap-/-xl token (64px)
+  -->
+  <div class="container-max grid items-center gap-12 lg:grid-cols-[1fr_auto] lg:gap-16">
+    <!-- Left: intro paragraph + CTA — capped to ~80% of the column for breathing room -->
+    <div class="flex flex-col gap-6 lg:max-w-3xl">
+      <p data-intro class="h3-accent text-[var(--color-text)]">{intro}</p>
+      <div data-intro-cta>
+        <Button {...cta} />
+      </div>
+    </div>
+
+    <!-- Right: vertical slider rail + stats -->
+    <div class="flex items-stretch gap-[74px]">
+      <div class="relative w-[2px] rounded-full bg-[var(--color-primary-20)]">
+        <span
+          data-stats-thumb
+          class="absolute left-1/2 -translate-x-1/2 h-[122px] w-[4px] rounded-full bg-[var(--color-primary)]"
+          style="top: 0;"
+        ></span>
+      </div>
+      <ul class="flex flex-col gap-12 min-w-[200px]">
+        {
+          stats.map((s, i) => (
+            <li
+              data-stat
+              data-stat-index={i}
+              class:list={[
+                "flex flex-col gap-2 transition-opacity duration-500",
+                i === 1 ? "opacity-100" : "opacity-30",
+              ]}
+            >
+              <span class="font-display text-[clamp(54px,6vw,82px)] leading-none text-[var(--color-primary)] inline-flex items-baseline">
+                {s.prefix && <span class="text-[0.5em]">{s.prefix}</span>}
+                <span data-count data-target={s.value}>{s.value}</span>
+                {s.suffix && <span class="text-[0.5em]">{s.suffix}</span>}
+              </span>
+              <span class="body-l tracking-[1px] text-[var(--color-text)]">{s.label}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, ScrollTrigger, setupCountUp } from "@lib/animations";
+
+  // ── Intro paragraph: whole-paragraph fade-up ──
+  gsap.from("[data-intro]", {
+    opacity: 0,
+    y: 24,
+    duration: 1.0,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-intro]", start: "top 85%", once: true },
+  });
+
+  // ── CTA fade-up ──
+  gsap.from("[data-intro-cta]", {
+    opacity: 0,
+    y: 16,
+    duration: 0.8,
+    delay: 0.3,
+    ease: "expo.out",
+    scrollTrigger: { trigger: "[data-intro-cta]", start: "top 90%", once: true },
+  });
+
+  // ── Stats count-up ──
+  setupCountUp("[data-count]");
+
+  // ── Scroll-linked active stat: thumb moves between 27 → 12 → 8
+  // and the inactive stats fade. Pinned to the section's scroll
+  // travel.
+  const block = document.querySelector<HTMLElement>("[data-block='intro-stats']");
+  const thumb = document.querySelector<HTMLElement>("[data-stats-thumb]");
+  const stats = Array.from(document.querySelectorAll<HTMLElement>("[data-stat]"));
+
+  if (block && thumb && stats.length) {
+    const setActive = (idx: number) => {
+      stats.forEach((el, i) => el.style.opacity = i === idx ? "1" : "0.3");
+    };
+
+    ScrollTrigger.create({
+      trigger: block,
+      start: "top 70%",
+      end: "bottom 40%",
+      scrub: 0.5,
+      onUpdate: (self) => {
+        const total = stats.length;
+        const idx = Math.min(total - 1, Math.floor(self.progress * total));
+        setActive(idx);
+        // Move thumb by stat height + gap
+        const target = stats[idx];
+        if (target) {
+          const list = target.parentElement!;
+          const offset = target.offsetTop - list.offsetTop;
+          thumb.style.top = `${offset}px`;
+          thumb.style.height = `${target.offsetHeight}px`;
+        }
+      },
+    });
+  }
+</script>
